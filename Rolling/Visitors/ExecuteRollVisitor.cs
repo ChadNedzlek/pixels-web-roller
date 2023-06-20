@@ -59,6 +59,12 @@ public class ExecuteRollVisitor : ExpressionVisitor<RollExpressionResult>
 
     public override RollExpressionResult VisitAddExpression(RollExpressionResult left, RollExpressionResult right)
     {
+        if (left.Groups.Last().Tag == right.Groups.Last().Tag)
+        {
+            // We can combine the bits into a single group
+            #error 
+        }
+
         return new RollExpressionResult(
             left.Value + right.Value,
             left.Groups.AddRange(right.Groups),
@@ -77,7 +83,7 @@ public class ExecuteRollVisitor : ExpressionVisitor<RollExpressionResult>
 
     public override RollExpressionResult VisitConstantExpression(int value)
     {
-        return new RollExpressionResult(value, new ValueGroup(Maybe<string>.None));
+        return new RollExpressionResult(value);
     }
 
     public override RollExpressionResult VisitTaggedExpression(string tag, RollExpressionResult expressionValue)
@@ -120,7 +126,7 @@ public class ExecuteRollVisitor : ExpressionVisitor<RollExpressionResult>
         }
 
         HashSet<RawRoll> dropped = rolls.OrderBy(r => r.Result).Take(drop).ToHashSet();
-        var res = rolls.ConvertAll(r => new DieResult(r, dropped.Contains(r)));
+        var res = rolls.Select(r => new DieResult(r, dropped.Contains(r))).ToImmutableList();
         bool critSuccesss = false;
         bool critFail = false;
         if (dice.Count - drop == 1)
@@ -133,6 +139,6 @@ public class ExecuteRollVisitor : ExpressionVisitor<RollExpressionResult>
 
         var value = rolls.Where(r => !dropped.Contains(r)).Sum(r => r.Result);
 
-        return new RollExpressionResult(value, new RollResultGroup(Maybe<string>.None, res, critSuccesss, critFail));
+        return new RollExpressionResult(new SingleRollResult(res, value, critSuccesss, critFail));
     }
 }

@@ -8,28 +8,51 @@ namespace Rolling;
 
 public record struct DieResult(RawRoll Value, bool Dropped);
 
-public record ValueGroup
+public record RollResult
 (
-    Maybe<string> Tag
+    int Value
 );
+
+public record SingleRollResult(
+    ImmutableList<DieResult> Rolls,
+    int Value,
+    bool CriticalSuccess,
+    bool CriticalFailure) : RollResult(Value);
 
 public record RollResultGroup(
     Maybe<string> Tag,
-    ImmutableList<DieResult> Rolls,
-    bool CriticalSuccess,
-    bool CriticalFailure) : ValueGroup(Tag);
+    int Value,
+    ImmutableList<RollResult> Items,
+    ImmutableList<RollResult> Operations)
+{
+    public static RollResultGroup FromRoll(RollResult result)
+        => new RollResultGroup(
+            Maybe<string>.None,
+            result.Value,
+            ImmutableList.Create(result),
+            ImmutableList<RollResult>.Empty
+        );
+    
+    public static RollResultGroup FromValue(int value)
+        => new RollResultGroup(
+            Maybe<string>.None,
+            value,
+            ImmutableList.Create(new RollResult(value)),
+            ImmutableList<RollResult>.Empty
+        );
+}
 
 public class RollExpressionResult
 {
     public int Value { get; }
-    public ImmutableList<ValueGroup> Groups { get; }
+    public ImmutableList<RollResultGroup> Groups { get; }
     public ImmutableList<char> Operations { get; }
 
-    public RollExpressionResult(int value, ValueGroup result) : this(value, ImmutableList.Create(result), ImmutableList<char>.Empty)
+    public RollExpressionResult(RollResultGroup result) : this(result.Value, ImmutableList.Create(result), ImmutableList<char>.Empty)
     {
     }
 
-    public RollExpressionResult(int value, ImmutableList<ValueGroup> groups, ImmutableList<char> operations)
+    public RollExpressionResult(int value, ImmutableList<RollResultGroup> groups, ImmutableList<char> operations)
     {
         if (groups.Count != operations.Count + 1)
         {
@@ -39,5 +62,13 @@ public class RollExpressionResult
         Value = value;
         Groups = groups;
         Operations = operations;
+    }
+
+    public RollExpressionResult(int value) : this(RollResultGroup.FromValue(value))
+    {
+    }
+    
+    public RollExpressionResult(RollResult roll) : this(RollResultGroup.FromRoll(roll))
+    {
     }
 }
