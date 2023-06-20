@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using FluentAssertions;
 using NUnit.Framework;
+using Rolling.Models;
 using Rolling.Models.Definitions;
 using Rolling.Parsing;
 using Sprache;

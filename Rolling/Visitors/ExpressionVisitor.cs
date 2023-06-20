@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using Rolling.Models;
 using Rolling.Models.Definitions;
 using Rolling.Models.Definitions.Expressions;
 using Rolling.Utilities;
@@ -38,15 +39,24 @@ public abstract class ExpressionVisitor<TValue>
 
         foreach (var section in sheet.Sections)
         {
-            foreach (var roll in section.Rolls)
-            {
-                VisitRoll(section.Name, section.Type, roll, Visit(roll.Expression, GetValue), roll.ConditionalExpression.Select(r => Visit(r, GetValue)));
-            }
+            Visit(section, GetValue);
         }
     }
 
-    public virtual void VisitRoll(Maybe<string> sectionName,
-        RollSectionType sectionType,
+    protected virtual void Visit(SheetDefinitionSection section, DiceRollDefinition roll, Func<string, TValue> lookup)
+    {
+        VisitRoll(section, roll, Visit(roll.Expression, lookup), roll.ConditionalExpression.Select(r => Visit(r, lookup)));
+    }
+
+    protected virtual void Visit(SheetDefinitionSection section, Func<string, TValue> lookup)
+    {
+        foreach (var roll in section.Rolls)
+        {
+            Visit(section, roll, lookup);
+        }
+    }
+
+    public virtual void VisitRoll(SheetDefinitionSection section,
         DiceRollDefinition roll,
         TValue value,
         Maybe<TValue> conditionalValue)

@@ -165,7 +165,7 @@
         string valueText;
         if (_showDetails)
         {
-            IOrderedEnumerable<IGrouping<int,DieRoll>> sortedGroups = gr.Rolls.GroupBy(r => r.Size).OrderByDescending(g => g.Key);
+            IOrderedEnumerable<IGrouping<int,RawRoll>> sortedGroups = gr.Rolls.GroupBy(r => r.Size).OrderByDescending(g => g.Key);
             IEnumerable<string> groupText = sortedGroups.Select(g => g.Key == 1 ? g.Count().ToString() : string.Join(",", g.Select(d => d.Result)));
             valueText = string.Join(" + ", groupText);
         }

@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using Rolling.Models;
 using Rolling.Models.Definitions;
 using Rolling.Utilities;
 
@@ -25,8 +26,7 @@ public record struct EvaluatedSheet<TValue>(ImmutableList<EvaluatedSection<TValu
             _evaluatedConditions.TryGetValue(roll, out TValue v) ? v : Maybe<TValue>.None;
 
 
-        public override void VisitRoll(Maybe<string> sectionName,
-            RollSectionType sectionType,
+        public override void VisitRoll(SheetDefinitionSection section,
             DiceRollDefinition roll,
             TValue value,
             Maybe<TValue> conditionalValue)

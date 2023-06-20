@@ -1,4 +1,4 @@
-﻿namespace Rolling;
+﻿namespace Rolling.Models;
 
 public enum RollSectionType
 {

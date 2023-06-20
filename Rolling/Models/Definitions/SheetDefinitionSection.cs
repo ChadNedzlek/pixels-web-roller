@@ -3,7 +3,7 @@ using Rolling.Utilities;
 
 namespace Rolling.Models.Definitions;
 
-public record struct SheetDefinitionSection(
+public record SheetDefinitionSection(
     Maybe<string> Name,
     RollSectionType Type,
     ImmutableList<DiceRollDefinition> Rolls

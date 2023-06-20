@@ -1,39 +1,43 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using Rolling.Utilities;
 
 namespace Rolling;
 
-public struct RollMode
-{
-    public Maybe<int> Keep { get; }
-    public Maybe<int> CriticalSuccess { get; }
-    public Maybe<int> CriticalFailure { get; }
-}
+public record struct DieResult(RawRoll Value, bool Dropped);
 
-public class RollResultGroup
-{
-    public Maybe<string> Tag { get; }
-    public ImmutableList<DieRoll> Rolls { get; }
-    public int Total { get; }
+public record ValueGroup
+(
+    Maybe<string> Tag
+);
 
-    public RollResultGroup(Maybe<string> tag, ImmutableList<DieRoll> rolls)
+public record RollResultGroup(
+    Maybe<string> Tag,
+    ImmutableList<DieResult> Rolls,
+    bool CriticalSuccess,
+    bool CriticalFailure) : ValueGroup(Tag);
+
+public class RollExpressionResult
+{
+    public int Value { get; }
+    public ImmutableList<ValueGroup> Groups { get; }
+    public ImmutableList<char> Operations { get; }
+
+    public RollExpressionResult(int value, ValueGroup result) : this(value, ImmutableList.Create(result), ImmutableList<char>.Empty)
     {
-        Tag = tag;
-        Rolls = rolls;
-        Total = rolls.Sum(r => r.Result);
-    }
-}
-
-public class FullRollResult
-{
-    public FullRollResult(Maybe<ImmutableList<RollResultGroup>> conditionalRolls, ImmutableList<RollResultGroup> valueRolls)
-    {
-        ConditionalRolls = conditionalRolls;
-        ValueRolls = valueRolls;
     }
 
-    public Maybe<ImmutableList<RollResultGroup>> ConditionalRolls { get; }
-    public ImmutableList<RollResultGroup> ValueRolls { get; }
+    public RollExpressionResult(int value, ImmutableList<ValueGroup> groups, ImmutableList<char> operations)
+    {
+        if (groups.Count != operations.Count + 1)
+        {
+            throw new ArgumentException($"{nameof(groups)} must be one longer than {nameof(operations)}");
+        }
+
+        Value = value;
+        Groups = groups;
+        Operations = operations;
+    }
 }

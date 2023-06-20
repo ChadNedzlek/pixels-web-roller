@@ -1,4 +1,5 @@
 ﻿using System.Collections.Immutable;
+using Rolling.Models;
 using Rolling.Models.Definitions;
 using Rolling.Models.Definitions.Expressions;
 using Sprache;

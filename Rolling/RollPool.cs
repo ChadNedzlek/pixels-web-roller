@@ -5,13 +5,13 @@ namespace Rolling;
 
 public class RollPool
 {
-    private readonly Dictionary<int, Queue<DieRoll>> _pool = new();
+    private readonly Dictionary<int, Queue<RawRoll>> _pool = new();
 
     public RollPool()
     {
     }
 
-    public RollPool(IEnumerable<DieRoll> rolls)
+    public RollPool(IEnumerable<RawRoll> rolls)
     {
         foreach (var roll in rolls)
         {
@@ -19,14 +19,14 @@ public class RollPool
         }
     }
 
-    public Maybe<DieRoll> Take(int size)
+    public Maybe<RawRoll> Take(int size)
     {
-        if (!_pool.TryGetValue(size, out Queue<DieRoll> list))
+        if (!_pool.TryGetValue(size, out Queue<RawRoll> list))
         {
-            return Maybe<DieRoll>.None;
+            return Maybe<RawRoll>.None;
         }
 
-        DieRoll roll = list.Dequeue();
+        RawRoll roll = list.Dequeue();
         if (list.Count == 0)
             _pool.Remove(size);
         return roll;
