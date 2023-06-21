@@ -4,23 +4,22 @@ using System.Collections.Immutable;
 using System.Linq;
 using Rolling.Models;
 using Rolling.Models.Definitions;
-using Rolling.Utilities;
+using Rolling.Models.Rolls;
 
 namespace Rolling.Visitors;
 
 public class ExecuteRollVisitor : ExpressionVisitor<RollExpressionResult>
 {
-    private readonly ImmutableList<RawRoll> _dice;
+    private readonly ImmutableList<DieRoll> _dice;
     private SheetDefinitionSection _section;
-    private RollPool _pool = null;
+    private RollPool _pool;
 
-    public ExecuteRollVisitor(ImmutableList<RawRoll> rolls)
+    public ExecuteRollVisitor(ImmutableList<DieRoll> rolls)
     {
         _dice = rolls;
     }
 
-
-    protected override void Visit(SheetDefinitionSection section, Func<string, RollExpressionResult> lookup)
+    public override void Visit(SheetDefinitionSection section, Func<string, RollExpressionResult> lookup)
     {
         _section = section;
         if (_section.Type == RollSectionType.UniqueDicePerRoll)
@@ -29,7 +28,7 @@ public class ExecuteRollVisitor : ExpressionVisitor<RollExpressionResult>
         _pool = null;
     }
 
-    protected override void Visit(SheetDefinitionSection section,
+    public override void Visit(SheetDefinitionSection section,
         DiceRollDefinition roll,
         Func<string, RollExpressionResult> lookup)
     {
@@ -39,46 +38,55 @@ public class ExecuteRollVisitor : ExpressionVisitor<RollExpressionResult>
         base.Visit(section, roll, lookup);
     }
 
+    private static RollExpressionResult Merge(RollExpressionResult left, RollExpressionResult right, char op, Func<int,int,int> calc)
+    {
+        if (left.Groups.Count != 1 ||
+            right.Groups.Count != 1 ||
+            left.Groups[0].Tag != right.Groups[0].Tag)
+        {
+            return new RollExpressionResult(
+                calc(left.Value, right.Value),
+                left.Groups.AddRange(right.Groups),
+                left.Operations.Add(op).AddRange(right.Operations)
+            );
+        }
+
+        RollResultGroup l = left.Groups[0];
+        RollResultGroup r = right.Groups[0];
+
+        var merged = new RollResultGroup(
+            l.Tag,
+            calc(l.Value, r.Value),
+            l.Items.AddRange(r.Items),
+            l.Operations + op + r.Operations
+        );
+            
+        // We can combine the bits into a single group
+        return new RollExpressionResult(
+            calc(left.Value, right.Value),
+            ImmutableList.Create(merged),
+            ImmutableList<char>.Empty
+        );
+    }
+
     public override RollExpressionResult VisitDivideExpression(RollExpressionResult left, RollExpressionResult right)
     {
-        return new RollExpressionResult(
-            left.Value / right.Value,
-            left.Groups.AddRange(right.Groups),
-            left.Operations.Add('/').AddRange(right.Operations)
-        );
+        return Merge(left, right, '/', (a, b) => a / b);
     }
 
     public override RollExpressionResult VisitMultiplyExpression(RollExpressionResult left, RollExpressionResult right)
     {
-        return new RollExpressionResult(
-            left.Value * right.Value,
-            left.Groups.AddRange(right.Groups),
-            left.Operations.Add('*').AddRange(right.Operations)
-        );
+        return Merge(left, right, '*', (a, b) => a / b);
     }
 
     public override RollExpressionResult VisitAddExpression(RollExpressionResult left, RollExpressionResult right)
     {
-        if (left.Groups.Last().Tag == right.Groups.Last().Tag)
-        {
-            // We can combine the bits into a single group
-            #error 
-        }
-
-        return new RollExpressionResult(
-            left.Value + right.Value,
-            left.Groups.AddRange(right.Groups),
-            left.Operations.Add('+').AddRange(right.Operations)
-        );
+        return Merge(left, right, '+', (a, b) => a / b);
     }
 
     public override RollExpressionResult VisitSubtractExpression(RollExpressionResult left, RollExpressionResult right)
     {
-        return new RollExpressionResult(
-            left.Value - right.Value,
-            left.Groups.AddRange(right.Groups),
-            left.Operations.Add('-').AddRange(right.Operations)
-        );
+        return Merge(left, right, '-', (a, b) => a / b);
     }
 
     public override RollExpressionResult VisitConstantExpression(int value)
@@ -97,10 +105,10 @@ public class ExecuteRollVisitor : ExpressionVisitor<RollExpressionResult>
 
     public override RollExpressionResult VisitDiceRollExpression(DiceSpecification dice)
     {
-        List<RawRoll> rolls = new List<RawRoll>();
+        List<DieRoll> rolls = new List<DieRoll>();
         for (int i = 0; i < dice.Count; i++)
         {
-            rolls.Add(_pool.Take(dice.Sides).Or(RawRoll.Random(dice.Sides)));
+            rolls.Add(_pool.Take(dice.Sides).Or(DieRoll.Random(dice.Sides)));
         }
 
         int drop = 0;
@@ -125,8 +133,8 @@ public class ExecuteRollVisitor : ExpressionVisitor<RollExpressionResult>
             }
         }
 
-        HashSet<RawRoll> dropped = rolls.OrderBy(r => r.Result).Take(drop).ToHashSet();
-        var res = rolls.Select(r => new DieResult(r, dropped.Contains(r))).ToImmutableList();
+        HashSet<DieRoll> dropped = rolls.OrderBy(r => r.Result).Take(drop).ToHashSet();
+        var res = rolls.Select(r => new AssignedDieRoll(r, dropped.Contains(r))).ToImmutableList();
         bool critSuccesss = false;
         bool critFail = false;
         if (dice.Count - drop == 1)

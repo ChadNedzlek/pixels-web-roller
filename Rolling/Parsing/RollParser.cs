@@ -1,5 +1,4 @@
-﻿using System.Linq;
-using Rolling.Models.Definitions;
+﻿using Rolling.Models.Definitions;
 using Rolling.Utilities;
 using Sprache;
 

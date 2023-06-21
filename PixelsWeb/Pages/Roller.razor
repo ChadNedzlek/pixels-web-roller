@@ -3,8 +3,10 @@
 @using Blazored.LocalStorage
 @using System.Collections.Immutable
 @using Rolling.Models.Definitions
+@using Rolling.Models.Rolls
 @using Rolling.Parsing
 @using Rolling.Utilities
+@using Rolling.Visitors
 @inject ILocalStorageService LocalStorage
 
 <PageTitle>Roller</PageTitle>
@@ -89,12 +91,12 @@
         </div>
     </div>
 
-    @if (_sheet.TryValue(out SheetDefinition sheet))
+    @if (_sheet.TryValue(out EvaluatedSheet<Maybe<RollExpressionResult>> sheet))
     {
         <div class="row">
 
             <div class="btn-group" role="group" aria-label="Basic checkbox toggle button group">
-                @* <button type="button" class="btn btn-primary col-8-sm" @onclick="RollAll">roll all</button> *@
+                <button type="button" class="btn btn-primary col-8-sm" @onclick="RollAll">roll all</button>
 
                 <input type="checkbox" class="btn-check" id="show-details" autocomplete="off" @bind="_showDetails">
                 <label class="btn btn-outline-primary  col-8-sm" for="show-details">show details</label>
@@ -103,7 +105,7 @@
 
         int sectionId = 0;
         <div class="accordion" id="roll-accordion">
-            @foreach (SheetDefinitionSection sect in sheet.Sections)
+            @foreach (EvaluatedSection<Maybe<RollExpressionResult>> sect in sheet.Sections)
             {
                 sectionId++;
                 int id = 1;
@@ -116,33 +118,23 @@
                     <div id="collapse-@sectionId" class="accordion-collapse collapse show">
                         <div class="accordion-body">
                             <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 row-cols-xl-4">
-                                @foreach (DiceRollDefinition roll in sect.Rolls)
+                                @foreach (EvaluatedRoll<Maybe<RollExpressionResult>> roll in sect.Rolls)
                                 {
                                     id++;
                                     <div class="col">
                                         <div class="card">
-                                            <div class="card-header">@roll.Name.Or($"Roll {id}")</div>
+                                            <div class="card-header">@roll.Definition.Name.Or($"Roll {id}")</div>
                                             <div class="card-body">
-                                                <h6 class="card-subtitle mb-2 text-body-secondary">@roll.Expression.ToString()</h6>
-                                                @* @if (roll.Roll.Result.TryValue(out var res)) *@
-                                                @* { *@
-                                                @*     <h5 class="card-title"> *@
-                                                @*         @if (res.ConditionalRolls.TryValue(out var cRoll)) *@
-                                                @*         { *@
-                                                @*             foreach (var part in cRoll) *@
-                                                @*             { *@
-                                                @*                 <span class="badge text-bg-dark mx-1">@DieText(part)</span> *@
-                                                @*             } *@
-                                                @*             <span class="bi bi-chevron-double-right" alt="result"></span> *@
-                                                @*         } *@
-                                                @*         @foreach (var part in res.ValueRolls) *@
-                                                @*         { *@
-                                                @*             <span class="badge text-bg-dark mx-1">@DieText(part)</span> *@
-                                                @*         } *@
-                                                @*     </h5> *@
-                                                @* *@
-                                                @*     <div class="accordion" id="roll--accordion"></div> *@
-                                                @* } *@
+                                                <h6 class="card-subtitle mb-2 text-body-secondary">@roll.Definition.Expression.DebugString()</h6>
+                                                @if (roll.Value.TryValue(out var res))
+                                                {
+                                                    DieText(res);
+                                                    if (roll.ConditionalValue.OrDefault().TryValue(out var cond))
+                                                    {
+                                                        <span> => </span>
+                                                        DieText(cond);
+                                                    }
+                                                }
                                             </div>
                                         </div>
                                     </div>
@@ -160,48 +152,38 @@
     private readonly RollParser _parser = new();
     private bool _showDetails = false;
 
-    private string DieText(SingleRollResult gr)
+    private RenderFragment DieText(RollExpressionResult gr)
     {
-        string valueText;
         if (_showDetails)
         {
-            IOrderedEnumerable<IGrouping<int,RawRoll>> sortedGroups = gr.Rolls.GroupBy(r => r.Size).OrderByDescending(g => g.Key);
-            IEnumerable<string> groupText = sortedGroups.Select(g => g.Key == 1 ? g.Count().ToString() : string.Join(",", g.Select(d => d.Result)));
-            valueText = string.Join(" + ", groupText);
         }
-        else
-            valueText = gr.Total.ToString();
-        return gr.Tag.Match(t => $"{valueText} {t}", valueText);
+
+        string color = "text-bg-primary";
+        RenderFragment hidden = null;
+        var dice = gr.Groups.SelectMany(g => g.Items.OfType<SingleRollResult>()).ToList();
+        if (dice.Any(d => d.CriticalFailure))
+        {
+            color = "text-bg-danger";
+            hidden = @<span class="visually-hidden">(crit. fail)</span>;
+        }
+        if (dice.Any(d => d.CriticalSuccess))
+        {
+            color = "text-bg-success";
+            hidden = @<span class="visually-hidden">(crit. fail)</span>;
+        }
+
+        return @<span class="badge @color">@gr.Value @hidden</span>;
     }
 
-    // private void RollAll()
-    // {
-    //     if (!_sheet.TryValue(out var sheet))
-    //         return;
-    //     foreach (var section in sheet.Sections)
-    //     {
-    //         var dice = section.GetRequiredDiceCounts();
-    //         var rollBuilder = ImmutableList.CreateBuilder<DieRoll>();
-    //         foreach ((int size, int count) in dice)
-    //         {
-    //             for (int i = 0; i < count; i++)
-    //             {
-    //                 rollBuilder.Add(DieRoll.Random(size));
-    //             }
-    //         }
-    //         var rolls = rollBuilder.ToImmutableList();
-    //         RollPool pool = null;
-    //         foreach (var roll in section.Rolls)
-    //         {
-    //             if (pool == null || section.Type == RollSectionType.RepeatDice)
-    //             {
-    //                 pool = new RollPool(rolls);
-    //             }
-    //
-    //             roll.Roll.Roll(pool);
-    //         }
-    //     }
-    // }
+    private void RollAll()
+    {
+        if (!_sheetDefinition.TryValue(out SheetDefinition sheet))
+        {
+            return;
+        }
+
+        _sheet = sheet.Roll(ImmutableList<DieRoll>.Empty);
+    }
 
     private Task RollChanged()
     {
@@ -216,7 +198,8 @@
             async result =>
             {
                 _errorMessage = null;
-                _sheet = result;
+                _sheetDefinition = result;
+                _sheet = result.Empty();
                 await LocalStorage.SetItemAsync("roll-text", value);
             },
             errorMessage =>
@@ -229,7 +212,8 @@
 
     private string _rollText;
     private string _errorMessage;
-    private Maybe<SheetDefinition> _sheet;
+    private Maybe<EvaluatedSheet<Maybe<RollExpressionResult>>> _sheet;
+    private Maybe<SheetDefinition> _sheetDefinition;
 
     protected override async Task OnInitializedAsync()
     {

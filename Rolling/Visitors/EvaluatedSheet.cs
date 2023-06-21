@@ -1,8 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using Rolling.Models;
 using Rolling.Models.Definitions;
+using Rolling.Models.Rolls;
 using Rolling.Utilities;
 
 namespace Rolling.Visitors;
@@ -24,8 +26,7 @@ public record struct EvaluatedSheet<TValue>(ImmutableList<EvaluatedSection<TValu
 
         public Maybe<TValue> GetConditionalValue(DiceRollDefinition roll) =>
             _evaluatedConditions.TryGetValue(roll, out TValue v) ? v : Maybe<TValue>.None;
-
-
+        
         public override void VisitRoll(SheetDefinitionSection section,
             DiceRollDefinition roll,
             TValue value,
@@ -34,7 +35,13 @@ public record struct EvaluatedSheet<TValue>(ImmutableList<EvaluatedSection<TValu
             _evaluatedRolls.Add(roll, value);
             if (conditionalValue.TryValue(out var cond))
                 _evaluatedConditions.Add(roll, cond);
+
+            _impl.VisitRoll(section, roll, value, conditionalValue);
         }
+
+        public override void Visit(SheetDefinitionSection section, Func<string, TValue> lookup) => _impl.Visit(section, lookup);
+
+        public override void Visit(SheetDefinitionSection section, DiceRollDefinition roll, Func<string, TValue> lookup) => _impl.Visit(section, roll, lookup);
 
         public override TValue VisitDivideExpression(TValue left, TValue right) => _impl.VisitDivideExpression(left, right);
 
@@ -78,3 +85,9 @@ public static class EvaluatedSheet
 
 public record struct EvaluatedSection<TValue>(Maybe<string> Name, ImmutableList<EvaluatedRoll<TValue>> Rolls);
 public record struct EvaluatedRoll<TValue>(DiceRollDefinition Definition, TValue Value, Maybe<TValue> ConditionalValue);
+
+public static class FullSheet
+{
+    public static EvaluatedSheet<Maybe<RollExpressionResult>> Empty(this SheetDefinition sheet) => sheet.Evaluate(ExpressionVisitor<Maybe<RollExpressionResult>>.Default);
+    public static EvaluatedSheet<Maybe<RollExpressionResult>> Roll(this SheetDefinition sheet, ImmutableList<DieRoll> rolls) => sheet.Evaluate(new ExecuteRollVisitor(rolls).Maybe());
+}
