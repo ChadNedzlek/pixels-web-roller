@@ -7,15 +7,15 @@ public class RollExpressionResult
 {
     public int Value { get; }
     public ImmutableList<RollResultGroup> Groups { get; }
-    public ImmutableList<char> Operations { get; }
+    public string Operations { get; }
 
-    public RollExpressionResult(RollResultGroup result) : this(result.Value, ImmutableList.Create(result), ImmutableList<char>.Empty)
+    public RollExpressionResult(RollResultGroup result) : this(result.Value, ImmutableList.Create(result), "")
     {
     }
 
-    public RollExpressionResult(int value, ImmutableList<RollResultGroup> groups, ImmutableList<char> operations)
+    public RollExpressionResult(int value, ImmutableList<RollResultGroup> groups, string operations)
     {
-        if (groups.Count != operations.Count + 1)
+        if (groups.Count != operations.Length + 1)
         {
             throw new ArgumentException($"{nameof(groups)} must be one longer than {nameof(operations)}");
         }

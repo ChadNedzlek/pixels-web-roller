@@ -13,6 +13,6 @@ public record DieRoll(int Result, int Size, Maybe<int> Id)
         if (size == 1)
             return One;
         
-        return new DieRoll(s_random.Next(1, size), size, Maybe<int>.None);
+        return new DieRoll(s_random.Next(1, size + 1), size, Maybe<int>.None);
     }
 }

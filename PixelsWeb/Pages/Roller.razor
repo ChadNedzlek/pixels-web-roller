@@ -2,16 +2,36 @@
 @using Rolling
 @using Blazored.LocalStorage
 @using System.Collections.Immutable
+@using PixelsBlazorInterop
 @using Rolling.Models.Definitions
 @using Rolling.Models.Rolls
 @using Rolling.Parsing
 @using Rolling.Utilities
 @using Rolling.Visitors
 @inject ILocalStorageService LocalStorage
+@inject PixelsManager PixelsManager
+@inject IJSRuntime JsRuntime
 
 <PageTitle>Roller</PageTitle>
 
 <div class="container">
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+      <div id="failed-to-connect-toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+          <span class="bi bi-exclamation-circle-fill rounded me-2 text-danger" aria-hidden="true"></span>
+          <strong class="me-auto">Error</strong>
+          <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body">
+          failed to connect to pixels dice.
+        </div>
+      </div>
+    </div>
+    <div class="row">
+        <div class="btn-group" role="group" aria-label="Basic checkbox toggle button group">
+            <button type="button" class="btn btn-primary col-8-sm" @onclick="ConnectPixels">connect dice</button>
+        </div>
+    </div>
     <div class="accordion" id="definition-accordion">
         <div class="accordion-item">
             <h2 class="accordion-header">
@@ -51,18 +71,17 @@
                 <li><code>d20 + 12</code></li>
             </ul>
             <h5>Named rolls</h5>
-            <p>Any roll can be named, by surrounding the name with colons before a roll, with :NAME:</p>
+            <p>Any roll can be named, by putting it before a colon in front of a roll</p>
             <ul>
-                <li><code>:Perception: d20 + 12</code></li>
+                <li><code>Perception: d20 + 12</code></li>
             </ul>
             <h5>Multiple rolls</h5>
-            <p>Multiple rolls can be specified, most easily by separating them with line breaks</p>
-            <p class="text-muted">Technically newlines are optional, but it's much easier to read</p>
+            <p>Multiple rolls can be specified, each on it's own line</p>
             <ul>
                 <li><pre><code>d20 + 10
 3d6 + 7</code></pre></li>
-                <li><pre><code>:Attack: d20 + 10
-:Fireball: 3d6 + 7</code></pre></li>
+                <li><pre><code>Attack: d20 + 10
+Fireball: 3d6 + 7</code></pre></li>
             </ul>
             <h5>Roll tags</h5>
             <p>Dices and modifiers can be tagged, with, for example, damage types. Tagged dice will be kept seprate when rolled and not summed into the total. To tag a roll, just follow it with some words.</p>
@@ -81,12 +100,12 @@
             <p>Groups with <code>***</code> will use different values/dice for every roll in the group</p>
             <ul>
                 <li><pre><code>=== Skills ===
-:Perception: d20 + 7
-:Stealth: d20 + 11 + 3 in shadows
-:Fireball: 3d6 + 7</code></pre></li>
+Perception: d20 + 7
+Stealth: d20 + 11 + 3 in shadows
+Fireball: 3d6 + 7</code></pre></li>
                 <li><pre><code>*** Attacks ***
-:Attack 1: d20 + 10 => 3d6 + 5
-:Attack 2: d20 + 5 => 3d6 + 5</code></pre></li>
+Attack 1: d20 + 10 => 3d6 + 5
+Attack 2: d20 + 5 => 3d6 + 5</code></pre></li>
             </ul>
         </div>
     </div>
@@ -125,14 +144,17 @@
                                         <div class="card">
                                             <div class="card-header">@roll.Definition.Name.Or($"Roll {id}")</div>
                                             <div class="card-body">
-                                                <h6 class="card-subtitle mb-2 text-body-secondary">@roll.Definition.Expression.DebugString()</h6>
+                                                <h6 class="card-subtitle mb-2 text-body-secondary">
+                                                    @_describer.Evaluate(roll.Definition.Expression)
+                                                    @roll.Definition.ConditionalExpression.Match(e => " => " + _describer.Evaluate(e), "")
+                                                </h6>
                                                 @if (roll.Value.TryValue(out var res))
                                                 {
-                                                    DieText(res);
+                                                    @DieText(res);
                                                     if (roll.ConditionalValue.OrDefault().TryValue(out var cond))
                                                     {
                                                         <span> => </span>
-                                                        DieText(cond);
+                                                        @DieText(cond);
                                                     }
                                                 }
                                             </div>
@@ -154,25 +176,116 @@
 
     private RenderFragment DieText(RollExpressionResult gr)
     {
-        if (_showDetails)
+        return @<span>@GroupText(gr.Groups[0])
+           @foreach (var (g, o) in gr.Groups.Skip(1).Zip(gr.Operations))
+           {
+               <span> @o </span>
+               @GroupText(g)
+           }
+       </span>;
+    }
+
+    private RenderFragment CritFail() => @<span class="visually-hidden">(crit. fail)</span>;
+    private RenderFragment CritSuccess() => @<span class="visually-hidden">(crit. fail)</span>;
+
+    private RenderFragment RenderDieRoll(SingleRollResult singleRollResult)
+    {
+
+        string CalcColor(AssignedDieRoll d)
         {
+            if (d.Dropped)
+                return "text-bg-secondary";
+            if (singleRollResult.CriticalFailure)
+                return "text-bg-danger";
+            if (singleRollResult.CriticalSuccess)
+                return "text-bg-success";
+            if (d.Value.Id.IsNone)
+                return "text-bg-dark";
+            return "text-bg-primary";
         }
 
-        string color = "text-bg-primary";
+        return @<span>
+            @foreach (var roll in singleRollResult.Rolls)
+            {
+            <span class="badge @CalcColor(roll)">
+                @roll.Value.Result
+                @if (roll.Dropped)
+                {
+                    <span class="visually-hidden">(dropped)</span>
+                }
+            </span>
+            }
+            </span>;
+    }
+
+    private RenderFragment RenderConstant(RollResult rollResult) => @<span class="badge text-bg-dark">@rollResult.Value </span>;
+
+    private RenderFragment RenderSingleGroupItem(RollResult item)
+    {
+        RenderFragment renderedDie = item switch {
+            SingleRollResult res => RenderDieRoll(res),
+            var i =>RenderConstant(i),
+            };
+        return renderedDie;
+    }
+
+    private RenderFragment GroupText(RollResultGroup group)
+    {
         RenderFragment hidden = null;
-        var dice = gr.Groups.SelectMany(g => g.Items.OfType<SingleRollResult>()).ToList();
+        var dice = group.Items.OfType<SingleRollResult>().ToList();
+        if (dice.Any(d => d.CriticalFailure))
+        {
+            hidden = CritFail();
+        }
+        if (dice.Any(d => d.CriticalSuccess))
+        {
+            hidden = CritSuccess();
+        }
+        
+        if (_showDetails)
+        {
+            return @<span>
+                @RenderSingleGroupItem(group.Items[0])
+                @foreach (var (item, op) in group.Items.Skip(1).Zip(group.Operations))
+                {
+                   <span>@op</span>
+                   
+                   @RenderSingleGroupItem(item)
+                }
+                @hidden @group.Tag.OrDefault()
+           </span>;
+        }
+
+        string color = "text-bg-dark";
+        if (dice.Any(d => d.Rolls.Any(r => !r.Value.Id.IsNone)))
+        {
+            color = "text-bg-primary";
+        }
         if (dice.Any(d => d.CriticalFailure))
         {
             color = "text-bg-danger";
-            hidden = @<span class="visually-hidden">(crit. fail)</span>;
         }
         if (dice.Any(d => d.CriticalSuccess))
         {
             color = "text-bg-success";
-            hidden = @<span class="visually-hidden">(crit. fail)</span>;
         }
 
-        return @<span class="badge @color">@gr.Value @hidden</span>;
+        return @<span class="badge @color">@group.Value @hidden @group.Tag.OrDefault()</span>;
+    }
+
+    private async Task ConnectPixels()
+    {
+        Console.WriteLine("Waiting for die");
+        try
+        {
+            var die = await PixelsManager.RequestPixel();
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            await JsRuntime.InvokeVoidAsync("showFailedConnectToast", "failed-to-connect-toast");
+        }
+        Console.WriteLine("Found a die!!!");
     }
 
     private void RollAll()
@@ -212,6 +325,7 @@
 
     private string _rollText;
     private string _errorMessage;
+    private RollDescriptionEvaluator _describer = new RollDescriptionEvaluator();
     private Maybe<EvaluatedSheet<Maybe<RollExpressionResult>>> _sheet;
     private Maybe<SheetDefinition> _sheetDefinition;
 

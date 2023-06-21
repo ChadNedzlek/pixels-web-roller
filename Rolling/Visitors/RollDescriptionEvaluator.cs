@@ -5,34 +5,39 @@ using Rolling.Models.Definitions;
 
 namespace Rolling.Visitors;
 
-public class RollDescriptionVisitor : ExpressionVisitor<string>
+public class RollDescriptionEvaluator : ExpressionEvaluator<string>
 {
-    public override string VisitDivideExpression(string left, string right)
+    public string Evaluate(DiceExpression expression)
+    {
+        return Visit(expression, s => $"@{s}");
+    }
+
+    protected override string VisitDivideExpression(string left, string right)
     {
         return $"{left} / {right}";
     }
 
-    public override string VisitMultiplyExpression(string left, string right)
+    protected override string VisitMultiplyExpression(string left, string right)
     {
         return $"{left} * {right}";
     }
 
-    public override string VisitAddExpression(string left, string right)
+    protected override string VisitAddExpression(string left, string right)
     {
         return $"{left} + {right}";
     }
 
-    public override string VisitSubtractExpression(string left, string right)
+    protected override string VisitSubtractExpression(string left, string right)
     {
         return $"{left} - {right}";
     }
 
-    public override string VisitConstantExpression(int value)
+    protected override string VisitConstantExpression(int value)
     {
         return value.ToString();
     }
 
-    public override string VisitDiceRollExpression(DiceSpecification dice)
+    protected override string VisitDiceRollExpression(DiceSpecification dice)
     {
         StringBuilder b = new StringBuilder();
         if (dice.Count != 1)
@@ -55,7 +60,7 @@ public class RollDescriptionVisitor : ExpressionVisitor<string>
         return b.ToString();
     }
 
-    public override string VisitTaggedExpression(string tag, string expressionValue)
+    protected override string VisitTaggedExpression(string tag, string expressionValue)
     {
         return $"{expressionValue} {tag}";
     }

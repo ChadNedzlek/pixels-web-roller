@@ -7,7 +7,3 @@ public readonly record struct DiceSpecification(int Count, int Sides, ImmutableL
 {
     public override string ToString() => $"{Count}d{Sides}";
 }
-
-public interface IDieExpression
-{
-}

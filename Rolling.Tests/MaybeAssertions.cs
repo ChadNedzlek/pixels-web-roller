@@ -45,8 +45,19 @@ public class MaybeAssertions<TSubject, TAssertion> : ObjectAssertions<Maybe<TSub
             .BecauseOf(because, becauseArgs)
             .ForCondition(Subject.IsNone)
             .WithDefaultIdentifier(Identifier)
-            .FailWith("Expected {context} to be set None{reason}, but is {0}", Subject.OrDefault());
+            .FailWith("Expected {context} to be None{reason}, but is {0}", Subject.OrDefault());
 
         return new AndConstraint<MaybeAssertions<TSubject, TAssertion>>(this);
+    }
+
+    public AndWhichConstraint<MaybeAssertions<TSubject, TAssertion>, TSubject> BeSet(string because = "", params object[] becauseArgs)
+    {
+        Execute.Assertion
+            .BecauseOf(because, becauseArgs)
+            .ForCondition(!Subject.IsNone)
+            .WithDefaultIdentifier(Identifier)
+            .FailWith("Expected {context} to be set{reason}, but is None");
+
+        return new AndWhichConstraint<MaybeAssertions<TSubject, TAssertion>, TSubject>(this, Subject.OrDefault());
     }
 }

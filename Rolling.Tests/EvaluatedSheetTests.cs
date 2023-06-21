@@ -25,7 +25,7 @@ public class EvaluatedSheetTests
             d23 * @A * @B            
             """
         );
-        EvaluatedSheet<string> sheet = sheetDefinition.Evaluate(new RollDescriptionVisitor());
+        EvaluatedSheet<string> sheet = sheetDefinition.Evaluate(new RollDescriptionEvaluator().ToSavingVisitor());
         sheet.Sections.Should().SatisfyRespectively(
             s =>
             {

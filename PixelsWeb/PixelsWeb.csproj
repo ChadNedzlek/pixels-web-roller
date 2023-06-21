@@ -6,15 +6,9 @@
         <UseSystemResourceKeys>true</UseSystemResourceKeys>
         <DebuggerSupport>false</DebuggerSupport>
         <PublishTrimmed>true</PublishTrimmed>
-        <EnableUnsafeBinaryFormatterSerialization>false</EnableUnsafeBinaryFormatterSerialization>
-        <EnableUnsafeUTF7Encoding>false</EnableUnsafeUTF7Encoding>
-        <EventSourceSupport>false</EventSourceSupport>
-        <HttpActivityPropagationSupport>false</HttpActivityPropagationSupport>
-        <InvariantGlobalization>true</InvariantGlobalization>
-        <MetadataUpdaterSupport>false</MetadataUpdaterSupport>
-        <UseNativeHttpHandler>true</UseNativeHttpHandler>
-        <UseSystemResourceKeys>true</UseSystemResourceKeys>
-        <BlazorWebAssemblyPreserveCollationData>false</BlazorWebAssemblyPreserveCollationData>
+        <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+        <NodeBuildMode>production</NodeBuildMode>
+        <NodeBuildMode Condition=" '$(Configuration)' == 'Debug' ">development</NodeBuildMode>
     </PropertyGroup>
 
     <ItemGroup>
@@ -24,7 +18,13 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\PixelsBlazorInterop\PixelsBlazorInterop.csproj" />
       <ProjectReference Include="..\Rolling\Rolling.csproj" />
     </ItemGroup>
+    
+    <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+        <Exec Command="npm install" WorkingDirectory="npm-js" />
+        <Exec Command="npm run build -- --mode=$(NodeBuildMode)" WorkingDirectory="npm-js" />
+    </Target>
 
 </Project>
