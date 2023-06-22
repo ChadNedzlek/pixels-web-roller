@@ -1,11 +1,7 @@
 ﻿@page "/roller"
-@using Rolling
 @using Blazored.LocalStorage
-@using System.Collections.Immutable
 @using PixelsBlazorInterop
-@using Rolling.Models.Definitions
 @using Rolling.Models.Rolls
-@using Rolling.Parsing
 @using Rolling.Utilities
 @using Rolling.Visitors
 @inject ILocalStorageService LocalStorage
@@ -27,23 +23,56 @@
         </div>
       </div>
     </div>
-    <div class="row">
-        <div class="btn-group" role="group" aria-label="Basic checkbox toggle button group">
-            <button type="button" class="btn btn-primary col-8-sm" @onclick="ConnectPixels">connect dice</button>
-        </div>
+    <div class="accordion" id="connected-accordion">
+        <div class="accordion-item">
+            <h2 class="accordion-header">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-connected" aria-expanded="true" aria-controls="collapse-connected">
+                    connected dice
+                </button>
+            </h2>
+            <div id="collapse-connected" class="accordion-collapse collapse show" data-bs-parent="#connected-accordion">
+                <div class="accordion-body">
+                    <div class="row">
+                        @foreach (var die in _connectedDice)
+                        {
+                            <div class="card" style="width: 8rem">
+                                <div class="card-body">
+                                    <h5 class="card-subtitle">@die.Name</h5>
+                                    <p class="card-text">
+                                        @if (die.RollState == "onFace")
+                                        {
+                                            <span class="badge text-bg-primary">@die.Face</span>
+                                        }
+                                        else
+                                        {
+                                            @die.RollState
+                                        }
+                                    </p>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                        <div class="row">
+                            <div class="btn-group" role="group" aria-label="Basic checkbox toggle button group">
+                                <button type="button" class="btn btn-primary col-8-sm" @onclick="ConnectPixels">connect dice</button>
+                            </div>
+                        </div>
+                    </div>
+            </div>
+    </div>
     </div>
     <div class="accordion" id="definition-accordion">
         <div class="accordion-item">
             <h2 class="accordion-header">
                 <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-definition" aria-expanded="true" aria-controls="collapse-definition">
-                    Definition
+                    roll definitions
                 </button>
             </h2>
             <div id="collapse-definition" class="accordion-collapse collapse @(_sheet.IsNone ? "show" : "")" data-bs-parent="#definition-accordion">
                 <div class="accordion-body">
                     <div class="row">
                         <label for="roll-definitions" class="form-label">
-                            Roll Definition
+                            roll text
                             <a data-bs-toggle="offcanvas" href="#syntax-help" role="link" aria-controls="syntax-help"><span class="badge bg-primary rounded-pill">?</span></a>
                         </label>
                         <textarea class="form-control @(_errorMessage != null ? "is-invalid" : "")" rows="5" id="roll-definitions" @bind:after="RollChanged" @bind="_rollText" placeholder="3d6 + 7"></textarea>
@@ -171,8 +200,6 @@ Attack 2: d20 + 5 => 3d6 + 5</code></pre></li>
 </div>
 
 @code {
-    private readonly RollParser _parser = new();
-    private bool _showDetails = false;
 
     private RenderFragment DieText(RollExpressionResult gr)
     {
@@ -271,69 +298,6 @@ Attack 2: d20 + 5 => 3d6 + 5</code></pre></li>
         }
 
         return @<span class="badge @color">@group.Value @hidden @group.Tag.OrDefault()</span>;
-    }
-
-    private async Task ConnectPixels()
-    {
-        Console.WriteLine("Waiting for die");
-        try
-        {
-            var die = await PixelsManager.RequestPixel();
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-            await JsRuntime.InvokeVoidAsync("showFailedConnectToast", "failed-to-connect-toast");
-        }
-        Console.WriteLine("Found a die!!!");
-    }
-
-    private void RollAll()
-    {
-        if (!_sheetDefinition.TryValue(out SheetDefinition sheet))
-        {
-            return;
-        }
-
-        _sheet = sheet.Roll(ImmutableList<DieRoll>.Empty);
-    }
-
-    private Task RollChanged()
-    {
-        return ParseAndSaveRolls(_rollText);
-    }
-
-    private async Task ParseAndSaveRolls(string value)
-    {
-        if (value == null) return;
-        Either<SheetDefinition, string> res = _parser.TryParse(value);
-        await res.Match(
-            async result =>
-            {
-                _errorMessage = null;
-                _sheetDefinition = result;
-                _sheet = result.Empty();
-                await LocalStorage.SetItemAsync("roll-text", value);
-            },
-            errorMessage =>
-            {
-                _errorMessage = errorMessage;
-                return Task.CompletedTask;
-            }
-            );
-    }
-
-    private string _rollText;
-    private string _errorMessage;
-    private RollDescriptionEvaluator _describer = new RollDescriptionEvaluator();
-    private Maybe<EvaluatedSheet<Maybe<RollExpressionResult>>> _sheet;
-    private Maybe<SheetDefinition> _sheetDefinition;
-
-    protected override async Task OnInitializedAsync()
-    {
-        await base.OnInitializedAsync();
-        _rollText = await LocalStorage.GetItemAsync<string>("roll-text");
-        if (_rollText != null) await ParseAndSaveRolls(_rollText);
     }
 
 }

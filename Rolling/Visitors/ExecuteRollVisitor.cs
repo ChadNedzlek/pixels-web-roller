@@ -14,6 +14,7 @@ public class ExecuteRollVisitor : SavingRollVisitor<Maybe<RollExpressionResult>>
 
     public ExecuteRollVisitor(ImmutableList<DieRoll> rolls)
     {
+        _evaluator = new ExecuteRollEvaluator(new RollPool());
         _rolls = rolls;
     }
 

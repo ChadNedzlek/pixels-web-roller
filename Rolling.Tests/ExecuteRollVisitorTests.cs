@@ -17,7 +17,7 @@ public class ExecuteRollVisitorTests
     [Test]
     public void SingleD20Roll()
     {
-        var inputDice = ImmutableList.Create(new DieRoll(3, 20, Maybe<int>.None));
+        var inputDice = ImmutableList.Create(new DieRoll(3, 20, Maybe<long>.None));
         SheetDefinition sheet = new RollParser().Parse("d20");
         var evaluated = sheet.Evaluate(new ExecuteRollVisitor(inputDice));
         var section = evaluated.Sections.Should().ContainSingle().Subject;
@@ -40,7 +40,7 @@ public class ExecuteRollVisitorTests
     [Test]
     public void CombinedRolls()
     {
-        var inputDice = ImmutableList.Create(new DieRoll(3, 20, Maybe<int>.None), new DieRoll(5, 10, Maybe<int>.None));
+        var inputDice = ImmutableList.Create(new DieRoll(3, 20, Maybe<long>.None), new DieRoll(5, 10, Maybe<long>.None));
         SheetDefinition sheet = new RollParser().Parse("d20 + d10");
         var evaluated = sheet.Evaluate(new ExecuteRollVisitor(inputDice));
         var roll = evaluated.Sections[0].Rolls[0].Value.OrDefault();
@@ -76,7 +76,7 @@ public class ExecuteRollVisitorTests
     [Test]
     public void KeepHighest()
     {
-        var inputDice = ImmutableList.Create(new DieRoll(3, 20, Maybe<int>.None), new DieRoll(7, 20, Maybe<int>.None));
+        var inputDice = ImmutableList.Create(new DieRoll(3, 20, Maybe<long>.None), new DieRoll(7, 20, Maybe<long>.None));
         SheetDefinition sheet = new RollParser().Parse("2d20kh");
         var evaluated = sheet.Evaluate(new ExecuteRollVisitor(inputDice));
         var section = evaluated.Sections.Should().ContainSingle().Subject;
@@ -109,7 +109,7 @@ public class ExecuteRollVisitorTests
     [Test]
     public void Roll5Drop2()
     {
-        var inputDice = Enumerable.Range(1,5).Select(v => new DieRoll(v, 6, Maybe<int>.None)).ToImmutableList();
+        var inputDice = Enumerable.Range(1,5).Select(v => new DieRoll(v, 6, Maybe<long>.None)).ToImmutableList();
         SheetDefinition sheet = new RollParser().Parse("5d6d2");
         var evaluated = sheet.Evaluate(new ExecuteRollVisitor(inputDice));
         var group = Requirement(
@@ -121,7 +121,7 @@ public class ExecuteRollVisitorTests
     [Test]
     public void Roll5Keep2()
     {
-        var inputDice = Enumerable.Range(1,5).Select(v => new DieRoll(v, 6, Maybe<int>.None)).ToImmutableList();
+        var inputDice = Enumerable.Range(1,5).Select(v => new DieRoll(v, 6, Maybe<long>.None)).ToImmutableList();
         SheetDefinition sheet = new RollParser().Parse("5d6k2");
         var evaluated = sheet.Evaluate(new ExecuteRollVisitor(inputDice));
         var group = Requirement(
@@ -133,7 +133,7 @@ public class ExecuteRollVisitorTests
     [Test]
     public void CriticalD20()
     {
-        var inputDice = ImmutableList.Create(new DieRoll(13, 20, Maybe<int>.None));
+        var inputDice = ImmutableList.Create(new DieRoll(13, 20, Maybe<long>.None));
         SheetDefinition sheet = new RollParser().Parse("d20c>10");
         var evaluated = sheet.Evaluate(new ExecuteRollVisitor(inputDice));
         SingleRollResult part = Requirement(
@@ -150,7 +150,7 @@ public class ExecuteRollVisitorTests
     [Test]
     public void CriticalFailD20()
     {
-        var inputDice = ImmutableList.Create(new DieRoll(13, 20, Maybe<int>.None));
+        var inputDice = ImmutableList.Create(new DieRoll(13, 20, Maybe<long>.None));
         SheetDefinition sheet = new RollParser().Parse("d20c<15");
         var evaluated = sheet.Evaluate(new ExecuteRollVisitor(inputDice));
         SingleRollResult part = Requirement(
@@ -167,7 +167,7 @@ public class ExecuteRollVisitorTests
     [Test]
     public void DefaultCriticalD20()
     {
-        var inputDice = ImmutableList.Create(new DieRoll(20, 20, Maybe<int>.None));
+        var inputDice = ImmutableList.Create(new DieRoll(20, 20, Maybe<long>.None));
         SheetDefinition sheet = new RollParser().Parse("d20");
         var evaluated = sheet.Evaluate(new ExecuteRollVisitor(inputDice));
         SingleRollResult part = Requirement(
@@ -184,7 +184,7 @@ public class ExecuteRollVisitorTests
     [Test]
     public void DefaultCriticalFailD20()
     {
-        var inputDice = ImmutableList.Create(new DieRoll(1, 20, Maybe<int>.None));
+        var inputDice = ImmutableList.Create(new DieRoll(1, 20, Maybe<long>.None));
         SheetDefinition sheet = new RollParser().Parse("d20");
         var evaluated = sheet.Evaluate(new ExecuteRollVisitor(inputDice));
 
@@ -200,7 +200,7 @@ public class ExecuteRollVisitorTests
     [Test]
     public void TaggedSeparateGroup()
     {
-        var inputDice = ImmutableList.Create(new DieRoll(3, 20, Maybe<int>.None), new DieRoll(5, 10, Maybe<int>.None));
+        var inputDice = ImmutableList.Create(new DieRoll(3, 20, Maybe<long>.None), new DieRoll(5, 10, Maybe<long>.None));
         SheetDefinition sheet = new RollParser().Parse("d20 + d10 tagged");
         var evaluated = sheet.Evaluate(new ExecuteRollVisitor(inputDice));
         var roll = Requirement(

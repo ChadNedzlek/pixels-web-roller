@@ -14,7 +14,7 @@ module.exports = {
     },
     output: {
         path: path.resolve(__dirname, '../wwwroot/js'),
-        filename: "pizza.js",
+        filename: "index.bundle.js",
         library: "pixelWebModule"
     }
 };
