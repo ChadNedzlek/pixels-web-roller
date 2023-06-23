@@ -62,4 +62,9 @@ public static class ParserExtensions
             return Result.Success(res.Value, i);
         };
     }
+
+    public static Parser<string> ManyString(this Parser<char> input, bool trim = false)
+    {
+        return input.Many().Select(c => string.Join("", c)).Select(s => trim ? s.Trim() : s);
+    }
 }

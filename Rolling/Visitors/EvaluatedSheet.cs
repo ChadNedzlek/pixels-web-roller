@@ -15,6 +15,7 @@ public record struct EvaluatedSheet<TValue>(ImmutableList<EvaluatedSection<TValu
             sheet.Sections.Select(
                     s => new EvaluatedSection<TValue>(
                         s.Name,
+                        s.Type,
                         s.Rolls.Select(
                                 r =>
                                 {

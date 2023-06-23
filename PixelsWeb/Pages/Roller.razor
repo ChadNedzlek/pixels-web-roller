@@ -68,15 +68,34 @@
                     roll definitions
                 </button>
             </h2>
-            <div id="collapse-definition" class="accordion-collapse collapse @(_sheet.IsNone ? "show" : "")" data-bs-parent="#definition-accordion">
+            <div id="collapse-definition" class="accordion-collapse collapse" data-bs-parent="#definition-accordion">
                 <div class="accordion-body">
                     <div class="row">
-                        <label for="roll-definitions" class="form-label">
-                            roll text
-                            <a data-bs-toggle="offcanvas" href="#syntax-help" role="link" aria-controls="syntax-help"><span class="badge bg-primary rounded-pill">?</span></a>
-                        </label>
-                        <textarea class="form-control @(_errorMessage != null ? "is-invalid" : "")" rows="5" id="roll-definitions" @bind:after="RollChanged" @bind="_rollText" placeholder="3d6 + 7"></textarea>
-                        <div class="form-text text-danger">@_errorMessage</div>
+                        <div class="col">
+                            <input type="text" class="form-control" placeholder="Sheet Name" aria-label="sheet name" @bind="CurrentSheetName" @bind:after="CurrentSheetRenamed"/>
+                        </div>
+                        <div class="col">
+                            <select class="form-select" @bind="_currentSheetName" @bind:after="CurrentSheetChanged" aria-label="select sheet">
+                                @foreach (var o in _availableSheets)
+                                {
+                                    <option>@o</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-auto">
+                            <button class="btn btn-primary" type="button" @onclick="NewSheet">new</button>
+                            <button class="btn btn-primary" type="button" @onclick="DeleteCurrentSheet">delete</button>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <label for="roll-definitions" class="form-label">
+                                roll text
+                                <a data-bs-toggle="offcanvas" href="#syntax-help" role="link" aria-controls="syntax-help"><span class="badge bg-primary rounded-pill">?</span></a>
+                            </label>
+                            <textarea class="form-control @(_errorMessage != null ? "is-invalid" : "")" style="height: 10em;" id="roll-definitions" @bind:after="RollChanged" @bind="_rollText" @bind:event="oninput" autocomplete="off" autocapitalize="off"></textarea>
+                                <div class="form-text text-danger">@_errorMessage</div>
+                        </div>
                     </div>
                 </div>
             </div>

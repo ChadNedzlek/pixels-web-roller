@@ -5,9 +5,7 @@ namespace Rolling.Visitors;
 
 public class DefaultSavingVisitor<TValue> : SavingRollVisitor<TValue>
 {
-    public static DefaultSavingVisitor<TValue> Instance { get; } = new();
-
-    private DefaultSavingVisitor()
+    public DefaultSavingVisitor()
     {
     }
 

@@ -24,8 +24,9 @@ public abstract class SheetVisitor<TValue>
 
             visited = visited.Add(name);
             value = Evaluate(variables[name], n => GetValueRec(n, visited));
-            values.Add(name, value);
-            return value;
+            TValue simplified = SimplifyValue(value);
+            values.Add(name, simplified);
+            return simplified;
         }
 
         TValue GetValue(string name) => GetValueRec(name, ImmutableHashSet<string>.Empty);
@@ -39,6 +40,11 @@ public abstract class SheetVisitor<TValue>
         {
             Visit(section, GetValue);
         }
+    }
+
+    protected virtual TValue SimplifyValue(TValue value)
+    {
+        return value;
     }
 
     protected abstract TValue Evaluate(DiceExpression expression, Func<string, TValue> variableLookup);

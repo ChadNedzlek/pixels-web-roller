@@ -12,7 +12,7 @@ public static class Grammar
     public static readonly Parser<int> Num = Number.Select(int.Parse);
     public static readonly Parser<string> Identifier = Parse.Identifier(
         Letter.Or(Char('_')),
-        Letter.Or(Digit).Or(Char('_')).Or(Char('-'))
+        Letter.Or(Digit).Or(Char('_'))
     );
 
     public static readonly Parser<string> Words = Letter.Or(Char('_'))
@@ -57,7 +57,7 @@ public static class Grammar
     public static readonly Parser<DiceExpression> FinalExpr = AddExpr;
 
     public static readonly Parser<DiceRollDefinition> RollDefinition =
-        Words.Before(Char(':').SpaceAround())
+        CharExcept(":\r\n").ManyString(trim: true).Before(Char(':').SpaceAround())
             .Optional()
             .With(FinalExpr)
             .With(String("=>").SpaceAround().FollowedBy(FinalExpr).Optional())
@@ -84,7 +84,7 @@ public static class Grammar
         .FollowedBy(Char('='))
         .AtLeastOnce()
         .FollowedBy(
-            Words.SpaceAround().Select(w => (type: RollSectionType.RepeatDice, w))
+            CharExcept("=\r\n").ManyString(trim: true).SpaceAround().Select(w => (type: RollSectionType.RepeatDice, w))
         )
         .Before(Char('=').AtLeastOnce())
         .EndOfLine();
@@ -94,7 +94,7 @@ public static class Grammar
         .FollowedBy(Char('*'))
         .AtLeastOnce()
         .FollowedBy(
-            Words.SpaceAround().Select(w => (type: RollSectionType.UniqueDicePerRoll, w))
+            CharExcept("*\r\n").ManyString(trim: true).SpaceAround().Select(w => (type: RollSectionType.UniqueDicePerRoll, w))
         )
         .Before(Char('*').AtLeastOnce())
         .EndOfLine();

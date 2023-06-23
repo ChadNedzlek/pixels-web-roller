@@ -221,6 +221,33 @@ public class ExecuteRollVisitorTests
                 }
             );
     }
+    
+    [Test]
+    public void ResuseRollSection()
+    {
+        var inputDice = ImmutableList.Create(new DieRoll(3, 20, Maybe<long>.None), new DieRoll(7, 20, Maybe<long>.None));
+        SheetDefinition sheet = new RollParser().Parse("""
+            === SECTION ===
+            1d20
+            1d20
+            """);
+        var evaluated = sheet.Evaluate(new ExecuteRollVisitor(inputDice));
+        var section = evaluated.Sections.Should().ContainSingle().Subject;
+        section.Rolls.Should()
+            .AllSatisfy(
+                result =>
+                {
+                    var roll = result.Value.Should().BeSet().Subject;
+                    var group = roll.Groups.Should().ContainSingle().Subject;
+                    group.Value.Should().Be(3);
+                    group.Operations.Should().BeEmpty();
+                    var part = group.Items.Should().ContainSingle().Which.Should().BeOfType<SingleRollResult>().Subject;
+                    var die = part.Rolls.Should().ContainSingle().Subject;
+                    die.Dropped.Should().BeFalse();
+                    die.Value.Should().BeSameAs(inputDice[0]);
+                }
+            );
+    }
 
     private TValue Requirement<TValue>(Func<TValue> get)
     {

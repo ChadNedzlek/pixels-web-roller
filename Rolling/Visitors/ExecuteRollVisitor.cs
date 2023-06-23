@@ -18,6 +18,18 @@ public class ExecuteRollVisitor : SavingRollVisitor<Maybe<RollExpressionResult>>
         _rolls = rolls;
     }
 
+    protected override Maybe<RollExpressionResult> SimplifyValue(Maybe<RollExpressionResult> value)
+    {
+        return value.Select(
+            v =>
+            {
+                if (v.Groups.Count != 1) return v;
+                
+                return new RollExpressionResult(v.Value, ImmutableList.Create(RollResultGroup.FromValue(v.Value) with {Tag = v.Groups[0].Tag}), "");
+            }
+        );
+    }
+
     public override void Visit(SheetDefinitionSection section, Func<string, Maybe<RollExpressionResult>> lookup)
     {
         if (section.Type == RollSectionType.UniqueDicePerRoll)
