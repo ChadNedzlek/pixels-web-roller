@@ -11,18 +11,20 @@
 <PageTitle>Roller</PageTitle>
 
 <div class="container">
-    <div class="toast-container position-fixed bottom-0 end-0 p-3">
-      <div id="failed-to-connect-toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div id="failed-to-connect-toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
         <div class="toast-header">
-          <span class="bi bi-exclamation-circle-fill rounded me-2 text-danger" aria-hidden="true"></span>
-          <strong class="me-auto">Error</strong>
-          <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            <span class="bi bi-exclamation-circle-fill rounded me-2 text-danger" aria-hidden="true"></span>
+            <strong class="me-auto">Error</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
         </div>
         <div class="toast-body">
-          failed to connect to pixels dice.
+            failed to connect to pixels dice.
         </div>
-      </div>
     </div>
+</div>
+@if (_isBluetoothSupported)
+{
     <div class="accordion" id="connected-accordion">
         <div class="accordion-item">
             <h2 class="accordion-header">
@@ -52,173 +54,220 @@
                             </div>
                         }
                     </div>
-                        <div class="row">
-                            <div class="btn-group" role="group" aria-label="Basic checkbox toggle button group">
-                                <button type="button" class="btn btn-primary col-8-sm" @onclick="ConnectPixels">connect dice</button>
-                            </div>
-                        </div>
-                    </div>
-            </div>
-    </div>
-    </div>
-    <div class="accordion" id="definition-accordion">
-        <div class="accordion-item">
-            <h2 class="accordion-header">
-                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-definition" aria-expanded="true" aria-controls="collapse-definition">
-                    roll definitions
-                </button>
-            </h2>
-            <div id="collapse-definition" class="accordion-collapse collapse" data-bs-parent="#definition-accordion">
-                <div class="accordion-body">
                     <div class="row">
-                        <div class="col">
-                            <input type="text" class="form-control" placeholder="Sheet Name" aria-label="sheet name" @bind="CurrentSheetName" @bind:after="CurrentSheetRenamed"/>
-                        </div>
-                        <div class="col">
-                            <select class="form-select" @bind="_currentSheetName" @bind:after="CurrentSheetChanged" aria-label="select sheet">
-                                @foreach (var o in _availableSheets)
-                                {
-                                    <option>@o</option>
-                                }
-                            </select>
-                        </div>
-                        <div class="col-auto">
-                            <button class="btn btn-primary" type="button" @onclick="NewSheet">new</button>
-                            <button class="btn btn-primary" type="button" @onclick="DeleteCurrentSheet">delete</button>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col">
-                            <label for="roll-definitions" class="form-label">
-                                roll text
-                                <a data-bs-toggle="offcanvas" href="#syntax-help" role="link" aria-controls="syntax-help"><span class="badge bg-primary rounded-pill">?</span></a>
-                            </label>
-                            <textarea class="form-control @(_errorMessage != null ? "is-invalid" : "")" style="height: 10em;" id="roll-definitions" @bind:after="RollChanged" @bind="_rollText" @bind:event="oninput" autocomplete="off" autocapitalize="off"></textarea>
-                                <div class="form-text text-danger">@_errorMessage</div>
+                        <div class="btn-group" role="group" aria-label="Basic checkbox toggle button group">
+                            <button type="button" class="btn btn-primary col-8-sm" @onclick="ConnectPixels">connect dice</button>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-
-    <div class="offcanvas offcanvas-start" tabindex="-1" id="syntax-help" aria-labelledby="syntax-title">
-        <div class="offcanvas-header">
-            <h4 class="offcanvas-title" id="sytanx-title">Syntax Help</h4>
-            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+}
+else
+{
+    <div class="alert alert-secondary alert-dismissible fade show" role="alert">
+        <strong>Bluetooth not supported</strong> Try Chrome or Edge on windows, or Bluefy on iOS
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+<div class="accordion" id="definition-accordion">
+    <div class="accordion-item">
+        <h2 class="accordion-header">
+            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-definition" aria-expanded="true" aria-controls="collapse-definition">
+                roll definitions
+            </button>
+        </h2>
+        <div id="collapse-definition" class="accordion-collapse collapse" data-bs-parent="#definition-accordion">
+            <div class="accordion-body">
+                <div class="row">
+                    <div class="col">
+                        <input type="text" class="form-control" placeholder="Sheet Name" aria-label="sheet name" @bind="CurrentSheetName" @bind:after="CurrentSheetRenamed"/>
+                    </div>
+                    <div class="col">
+                        <select class="form-select" @bind="_currentSheetName" @bind:after="CurrentSheetChanged" aria-label="select sheet">
+                            @foreach (var o in _availableSheets)
+                            {
+                                <option>@o</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-auto">
+                        <button class="btn btn-primary" type="button" @onclick="NewSheet">new</button>
+                        <button class="btn btn-primary" type="button" @onclick="DeleteCurrentSheet">delete</button>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <label for="roll-definitions" class="form-label">
+                            roll text
+                            <a data-bs-toggle="offcanvas" href="#syntax-help" role="link" aria-controls="syntax-help"><span class="badge bg-primary rounded-pill">?</span></a>
+                        </label>
+                        <textarea class="form-control @(_errorMessage != null ? "is-invalid" : "")" style="height: 10em;" id="roll-definitions" @bind:after="RollChanged" @bind="_rollText" @bind:event="oninput" autocomplete="off" autocapitalize="off"></textarea>
+                        <div class="form-text text-danger">@_errorMessage</div>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="offcanvas-body">
-            <h5>Basic rolls</h5>
-            <p>Rolls can be written in straightforward manner.</p>
-            <ul>
-                <li><code>2d12</code></li>
-                <li><code>3d6 + 2d4 + 5</code></li>
-            </ul>
-            <p>The count of dice can be skipped for single dice.</p>
-            <ul>
-                <li><code>d20 + 12</code></li>
-            </ul>
-            <h5>Named rolls</h5>
-            <p>Any roll can be named, by putting it before a colon in front of a roll</p>
-            <ul>
-                <li><code>Perception: d20 + 12</code></li>
-            </ul>
-            <h5>Multiple rolls</h5>
-            <p>Multiple rolls can be specified, each on it's own line</p>
-            <ul>
-                <li><pre><code>d20 + 10
+    </div>
+</div>
+
+<div class="offcanvas offcanvas-start" tabindex="-1" id="syntax-help" aria-labelledby="syntax-title">
+    <div class="offcanvas-header">
+        <h4 class="offcanvas-title" id="sytanx-title">Syntax Help</h4>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        <h5>Basic rolls</h5>
+        <p>Rolls can be written in straightforward manner.</p>
+        <ul>
+            <li><code>2d12</code></li>
+            <li><code>3d6 + 2d4 + 5</code></li>
+        </ul>
+        <p>The count of dice can be skipped for single dice.</p>
+        <ul>
+            <li><code>d20 + 12</code></li>
+        </ul>
+        <h5>Named rolls</h5>
+        <p>Any roll can be named, by putting it before a colon in front of a roll</p>
+        <ul>
+            <li><code>Perception: d20 + 12</code></li>
+        </ul>
+        <h5>Multiple rolls</h5>
+        <p>Multiple rolls can be specified, each on it's own line</p>
+        <ul>
+            <li>
+                <pre><code>d20 + 10
 3d6 + 7</code></pre></li>
-                <li><pre><code>Attack: d20 + 10
+            <li>
+                <pre><code>Attack: d20 + 10
 Fireball: 3d6 + 7</code></pre></li>
-            </ul>
-            <h5>Roll tags</h5>
-            <p>Dices and modifiers can be tagged, with, for example, damage types. Tagged dice will be kept seprate when rolled and not summed into the total. To tag a roll, just follow it with some words.</p>
-            <ul>
-                <li><code>2d6 + 10 + 1d6 fire</code></li>
-                <li><code>d20 + 4 against poison</code></li>
-            </ul>
-            <h5>Conditional rolls</h5>
-            <p>Conditional rolls (for example, an attack roll followed by the damage if it hits), are separated by <code>=></code></p>
-            <ul>
-                <li><code>d20 + 15 => 3d6 + 7 + 1d6 fire</code></li>
-            </ul>
-            <h5>Roll groups</h5>
-            <p>Rolls can be grouped, both for visual collapsing of groups, as well as for easy rolling with external devices by providing a title surrounded by  <code>===</code> or <code>***</code></p>
-            <p>Groups with <code>===</code> (the default) will use a single die roll (or set of dice) for all dice in that group, do if you have 3 rolls that all use a "d20", the same d20 will be used in every roll</p>
-            <p>Groups with <code>***</code> will use different values/dice for every roll in the group</p>
-            <ul>
-                <li><pre><code>=== Skills ===
+        </ul>
+        <h5>Roll tags</h5>
+        <p>Dices and modifiers can be tagged, with, for example, damage types. Tagged dice will be kept seprate when rolled and not summed into the total. To tag a roll, just follow it with some words.</p>
+        <ul>
+            <li><code>2d6 + 10 + 1d6 fire</code></li>
+            <li><code>d20 + 4 against poison</code></li>
+        </ul>
+        <h5>Conditional rolls</h5>
+        <p>Conditional rolls (for example, an attack roll followed by the damage if it hits), are separated by <code>=></code></p>
+        <ul>
+            <li><code>d20 + 15 => 3d6 + 7 + 1d6 fire</code></li>
+        </ul>
+        <h5>Roll groups</h5>
+        <p>Rolls can be grouped, both for visual collapsing of groups, as well as for easy rolling with external devices by providing a title surrounded by <code>===</code> or <code>***</code></p>
+        <p>Groups with <code>===</code> (the default) will use a single die roll (or set of dice) for all dice in that group, do if you have 3 rolls that all use a "d20", the same d20 will be used in every roll</p>
+        <p>Groups with <code>***</code> will use different values/dice for every roll in the group</p>
+        <ul>
+            <li>
+                <pre><code>=== Skills ===
 Perception: d20 + 7
 Stealth: d20 + 11 + 3 in shadows
 Fireball: 3d6 + 7</code></pre></li>
-                <li><pre><code>*** Attacks ***
+            <li>
+                <pre><code>*** Attacks ***
 Attack 1: d20 + 10 => 3d6 + 5
 Attack 2: d20 + 5 => 3d6 + 5</code></pre></li>
-            </ul>
+        </ul>
+    </div>
+</div>
+
+@if (_sheet.TryValue(out EvaluatedSheet<Maybe<RollExpressionResult>> sheet))
+{
+    <div class="row">
+
+        <div class="btn-group" role="group" aria-label="Basic checkbox toggle button group">
+            <button type="button" class="btn btn-primary col-8-sm" @onclick="RollAll">roll all</button>
+
+            <input type="checkbox" class="btn-check" id="show-details" autocomplete="off" @bind="_showDetails">
+            <label class="btn btn-outline-primary  col-8-sm" for="show-details">show details</label>
         </div>
     </div>
 
-    @if (_sheet.TryValue(out EvaluatedSheet<Maybe<RollExpressionResult>> sheet))
-    {
-        <div class="row">
-
-            <div class="btn-group" role="group" aria-label="Basic checkbox toggle button group">
-                <button type="button" class="btn btn-primary col-8-sm" @onclick="RollAll">roll all</button>
-
-                <input type="checkbox" class="btn-check" id="show-details" autocomplete="off" @bind="_showDetails">
-                <label class="btn btn-outline-primary  col-8-sm" for="show-details">show details</label>
-            </div>
-        </div>
-
-        int sectionId = 0;
-        <div class="accordion" id="roll-accordion">
-            @foreach (EvaluatedSection<Maybe<RollExpressionResult>> sect in sheet.Sections)
-            {
-                sectionId++;
-                int id = 1;
-                <div class="accordion-item">
-                    <h2 class="accordion-header">
-                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-@sectionId" aria-expanded="true" aria-controls="collapse-@sectionId">
-                            @sect.Name.Or($"Section {sectionId}")
-                        </button>
-                    </h2>
-                    <div id="collapse-@sectionId" class="accordion-collapse collapse show">
-                        <div class="accordion-body">
-                            <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 row-cols-xl-4">
-                                @foreach (EvaluatedRoll<Maybe<RollExpressionResult>> roll in sect.Rolls)
-                                {
-                                    id++;
-                                    <div class="col">
-                                        <div class="card">
-                                            <div class="card-header">@roll.Definition.Name.Or($"Roll {id}")</div>
-                                            <div class="card-body">
-                                                <h6 class="card-subtitle mb-2 text-body-secondary">
-                                                    @_describer.Evaluate(roll.Definition.Expression)
-                                                    @roll.Definition.ConditionalExpression.Match(e => " => " + _describer.Evaluate(e), "")
-                                                </h6>
-                                                @if (roll.Value.TryValue(out var res))
+    int sectionId = 0;
+    <div class="accordion" id="roll-accordion">
+        @foreach (EvaluatedSection<Maybe<RollExpressionResult>> sect in sheet.Sections)
+        {
+            sectionId++;
+            int id = 1;
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-@sectionId" aria-expanded="true" aria-controls="collapse-@sectionId">
+                        @sect.Name.Or($"Section {sectionId}")
+                    </button>
+                </h2>
+                <div id="collapse-@sectionId" class="accordion-collapse collapse show">
+                    <div class="accordion-body">
+                        <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 row-cols-xl-4">
+                            @foreach (EvaluatedRoll<Maybe<RollExpressionResult>> roll in sect.Rolls)
+                            {
+                                id++;
+                                <div class="col">
+                                    <div class="card">
+                                        <div class="card-header">@roll.Definition.Name.Or($"Roll {id}")</div>
+                                        <div class="card-body">
+                                            <h6 class="card-subtitle mb-2 text-body-secondary">
+                                                @_describer.Evaluate(roll.Definition.Expression)
+                                                @roll.Definition.ConditionalExpression.Match(e => " => " + _describer.Evaluate(e), "")
+                                            </h6>
+                                            @if (roll.Value.TryValue(out var res))
+                                            {
+                                                @DieText(res)
+                                                ;
+                                                if (roll.ConditionalValue.OrDefault().TryValue(out var cond))
                                                 {
-                                                    @DieText(res);
-                                                    if (roll.ConditionalValue.OrDefault().TryValue(out var cond))
-                                                    {
-                                                        <span> => </span>
-                                                        @DieText(cond);
-                                                    }
+                                                    <span> => </span>
+                                                    @DieText(cond)
+                                                    ;
                                                 }
-                                            </div>
+                                            }
                                         </div>
                                     </div>
-                                }
-                            </div>
+                                </div>
+                            }
                         </div>
                     </div>
                 </div>
-            }
-        </div>
-    }
+            </div>
+        }
+    </div>
+}
+@if (!string.IsNullOrEmpty(_rollErrorText))
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <strong>Error rolling dice</strong> Report the below error:
+        <p><pre>@_rollErrorText</pre></p>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
 </div>
 
 @code {
+    private RenderFragment RenderRotatingDieSvg(string fillColor, double rot)
+    {
+        double CalculateOpacity(int piece)
+        {
+            return ((piece / 9.0) + rot) % 1;
+        }
+
+        return 
+        @<svg class="img-fluid" viewBox="-22 -22 44 44">
+            <g style="fill: @fillColor; stroke: transparent; stroke-linejoin: round;">
+                <g>
+                    <polygon points="0,-20 -20,-10 0,-10" style="fill-opacity: @CalculateOpacity(0)"/>
+                    <polygon points="0,-20 20,-10 0,-10" style="fill-opacity: @CalculateOpacity(1)"/>
+                    <polygon points="20,-10 0,-10 11,10" style="fill-opacity: @CalculateOpacity(2)"/>
+                    <polygon points="20,-10 11,10 20,10" style="fill-opacity: @CalculateOpacity(3)"/>
+                    <polygon points="20,10 11,10 0,20" style="fill-opacity: @CalculateOpacity(4)"/>
+                    <polygon points="-11,10 11,10 0,20" style="fill-opacity: @CalculateOpacity(5)"/>
+                    <polygon points="-20,10 -11,10 0,20" style="fill-opacity: @CalculateOpacity(6)"/>
+                    <polygon points="-20,-10 -11,10 -20,10" style="fill-opacity: @CalculateOpacity(7)"/>
+                    <polygon points="-20,-10 0,-10 -11,10" style="fill-opacity: @CalculateOpacity(8)"/>
+                </g>
+                <polygon points="0,-10 -11,10 11,10"/>
+            </g>
+       </svg>;
+    }
 
     private RenderFragment DieText(RollExpressionResult gr)
     {

@@ -29,13 +29,15 @@ public class PixelsManager
         private readonly PixelsManager _pixelsManager;
         
         public event Action<IPixelDevice, string> RollingStateChanged;
+        public event Action<IPixelDevice> Disconnected;
+        
         public string RollState { get; private set; }
         public int Face { get; private set; }
         public long PixelId { get; private set; }
         public string Name { get; private set; }
 
         private DotNetObjectReference<PixelDevice> _thisRef;
-        private int _callbackId;
+        private int? _callbackId;
 
         public PixelDevice(IJSObjectReference jsRef, PixelsManager pixelsManager)
         {
@@ -45,12 +47,16 @@ public class PixelsManager
 
         public async ValueTask DisposeAsync()
         {
-            await _pixelsManager._jsRuntime.InvokeVoidAsync(
-                "pixelWebModule.removePropertyListener",
-                _jsRef,
-                "rollState",
-                _callbackId
-            );
+            if (_callbackId.HasValue)
+            {
+                await _pixelsManager._jsRuntime.InvokeVoidAsync(
+                    "pixelWebModule.removePropertyListener",
+                    _jsRef,
+                    "rollState",
+                    _callbackId
+                );
+            }
+
             await _jsRef.InvokeVoidAsync("disconnect");
             await _jsRef.DisposeAsync();
             _thisRef.Dispose();
@@ -69,6 +75,13 @@ public class PixelsManager
                 "name"
             );
             _thisRef = DotNetObjectReference.Create(this);
+        }
+        
+        public async Task ConnectAsync()
+        {
+            if (_callbackId.HasValue)
+                throw new InvalidOperationException("Already connected");
+            
             _callbackId = await _pixelsManager._jsRuntime.InvokeAsync<int>(
                 "pixelWebModule.addPropertyListener",
                 _jsRef,

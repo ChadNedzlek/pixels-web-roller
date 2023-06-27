@@ -12,17 +12,24 @@ namespace PixelsWeb.Pages;
 
 public partial class Roller : IAsyncDisposable
 {
+    private class AnimationState
+    {
+        private bool _rotating;
+    }
+
     private readonly RollDescriptionEvaluator _describer = new();
     private readonly List<IPixelDevice> _connectedDice = new();
     private readonly HashSet<IPixelDevice> _rollingDice = new();
     private readonly List<IPixelDevice> _completedDice = new();
+    private readonly Dictionary<long, AnimationState> _animations = new();
     private readonly RollParser _parser = new();
     
     private string _rollText;
     private string _errorMessage;
+    private string _rollErrorText;
     private Maybe<SheetDefinition> _sheetDefinition;
     private Maybe<EvaluatedSheet<Maybe<RollExpressionResult>>> _sheet;
-    private bool _isDefault = false;
+    private bool _isBluetoothSupported = true;
     private bool _showDetails = false;
     private Timer _rollTimer;
 
@@ -42,13 +49,23 @@ public partial class Roller : IAsyncDisposable
 
     private List<string> _availableSheets = SampleSheet.Available.Keys.ToList();
     private string _currentSheetName;
+    private double _rotAnimation;
+    private Timer _rotationAnimation;
 
     private async Task ConnectPixels()
     {
         try
         {
             IPixelDevice die = await PixelsManager.RequestPixel();
+            if (_connectedDice.Any(c => c.PixelId == die.PixelId))
+            {
+                Console.WriteLine($"Detected reconnect of pixel {die.Name}, discarding");
+                return;
+            }
+
+            await die.ConnectAsync();
             _connectedDice.Add(die);
+            _animations.Add(die.PixelId, new AnimationState());
             die.RollingStateChanged += DieRolled;
         }
         catch (Exception e)
@@ -99,8 +116,20 @@ public partial class Roller : IAsyncDisposable
             return;
         }
 
-        _sheet = sheet.Roll(rolls);
+        DoRolls(sheet, rolls);
         StateHasChanged();
+    }
+
+    private void DoRolls(SheetDefinition sheet, ImmutableList<DieRoll> rolls)
+    {
+        try
+        {
+            _sheet = sheet.Roll(rolls);
+        }
+        catch (Exception e)
+        {
+            _rollErrorText = e.ToString();
+        }
     }
 
     private async Task ParseAndSaveRolls(string value)
@@ -143,6 +172,27 @@ public partial class Roller : IAsyncDisposable
     {
         await base.OnInitializedAsync();
         await LoadSavedSheets();
+        //_rotationAnimation = new Timer(AnimateFrame, null, TimeSpan.Zero, TimeSpan.FromMilliseconds(100));
+        await CheckBluetoothSupport();
+    }
+
+    private async Task CheckBluetoothSupport()
+    {
+        try
+        {
+            _isBluetoothSupported = await JsRuntime.InvokeAsync<bool>("navigator.bluetooth.getAvailability");
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            _isBluetoothSupported = false;
+        }
+    }
+
+    private void AnimateFrame(object state)
+    {
+        _rotAnimation = (_rotAnimation + 0.1) % 1;
+        StateHasChanged();
     }
 
     private async Task LoadSavedSheets()
@@ -163,7 +213,6 @@ public partial class Roller : IAsyncDisposable
 
     private void PrepareFirstTimeVisit()
     {
-        _isDefault = true;
         _availableSheets = SampleSheet.Available.Keys.ToList();
         _currentSheetName = _availableSheets[0];
         
@@ -248,8 +297,8 @@ public partial class Roller : IAsyncDisposable
         {
             return;
         }
-
-        _sheet = sheet.Roll(ImmutableList<DieRoll>.Empty);
+        
+        DoRolls(sheet, ImmutableList<DieRoll>.Empty);
     }
     
     public async ValueTask DisposeAsync()
@@ -260,6 +309,7 @@ public partial class Roller : IAsyncDisposable
         }
         
         _connectedDice.Clear();
+        //await _rotationAnimation.DisposeAsync();
     }
 
     private void NewSheet()
