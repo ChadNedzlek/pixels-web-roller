@@ -1,12 +1,14 @@
 ﻿@page "/roller"
 @using Blazored.LocalStorage
+@using CharacterSheetImporter
 @using PixelsBlazorInterop
 @using Rolling.Models.Rolls
-@using Rolling.Utilities
 @using Rolling.Visitors
+@using Utilities
 @inject ILocalStorageService LocalStorage
 @inject PixelsManager PixelsManager
 @inject IJSRuntime JsRuntime
+@inject SheetImportManager SheetImport
 
 <PageTitle>Roller</PageTitle>
 
@@ -95,6 +97,17 @@ else
                     <div class="col-auto">
                         <button class="btn btn-primary" type="button" @onclick="NewSheet">new</button>
                         <button class="btn btn-primary" type="button" @onclick="DeleteCurrentSheet">delete</button>
+                        <button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#import-modal" disabled="@(_isLoading)">
+                            @if (_isLoading)
+                            {
+                                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                <span>importing...</span>
+                            }
+                            else
+                            {
+                                <span>import...</span>
+                            }
+                        </button>
                     </div>
                 </div>
                 <div class="row">
@@ -109,6 +122,35 @@ else
                 </div>
             </div>
         </div>
+    </div>
+</div>
+
+<div class="modal fade" id="import-modal" tabindex="-1" aria-labelledby="import-modal-title" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="import-modal-title">Import Character</h1> 
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form class="modal-body" id="import-modal-form">
+                <div class="row">
+                    <label for="import-file" class="form-label">Import File</label>
+                    <InputFile OnChange="ImportFile" class="form-control" id="import-file"></InputFile>
+                </div>
+                <hr>
+                <div class="hr-text-overlay">
+                    <hr />
+                    <span>OR</span>
+                </div>
+                <div class="row">
+                    <label for="import-text" class="form-label">stat block</label>
+                    <textarea class="form-control" style="height: 10em;" id="import-text" @bind="_importText" @bind:event="oninput" @bind:after="ImportTextSubmitted" autocomplete="off" autocapitalize="off"></textarea>
+                </div>
+            </form>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+            </div>
     </div>
 </div>
 

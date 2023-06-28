@@ -1,5 +1,5 @@
 ﻿using System;
-using Rolling.Utilities;
+using Utilities;
 
 namespace Rolling;
 

@@ -7,8 +7,8 @@ using Rolling.Models;
 using Rolling.Models.Definitions;
 using Rolling.Models.Rolls;
 using Rolling.Parsing;
-using Rolling.Utilities;
 using Rolling.Visitors;
+using Utilities;
 
 namespace Rolling.Tests;
 

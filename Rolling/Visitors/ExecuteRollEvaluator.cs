@@ -5,7 +5,6 @@ using System.Linq;
 using Rolling.Models;
 using Rolling.Models.Definitions;
 using Rolling.Models.Rolls;
-using Rolling.Utilities;
 
 namespace Rolling.Visitors;
 

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Rolling.Utilities;
+namespace Utilities;
 
 public readonly struct Either<T1, T2>
 {

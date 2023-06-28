@@ -18,6 +18,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\CharacterSheetImporter\CharacterSheetImporter.csproj" />
       <ProjectReference Include="..\PixelsBlazorInterop\PixelsBlazorInterop.csproj" />
       <ProjectReference Include="..\Rolling\Rolling.csproj" />
     </ItemGroup>

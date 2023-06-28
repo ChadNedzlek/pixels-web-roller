@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Immutable;
 using FluentAssertions;
 using NUnit.Framework;
@@ -5,6 +6,7 @@ using Rolling.Models;
 using Rolling.Models.Definitions;
 using Rolling.Parsing;
 using Sprache;
+using Utilities;
 
 namespace Rolling.Tests;
 
@@ -15,11 +17,13 @@ public class RollParserTests
     {
         Grammar.Identifier.Parse("pizza").Should().Be("pizza");
     }
+    
     [Test]
     public void WordsTest()
     {
         Grammar.Words.Parse("some words").Should().Be("some words");
     }
+    
     [Test]
     public void ModListTests()
     {
@@ -188,5 +192,80 @@ d20 + 50
 """);
         sheet.Sections.Should().HaveCount(3);
         sheet.Variables.Should().HaveCount(2);
+    }
+
+    [Test]
+    public void ParserWithComments()
+    {
+    }
+
+    [Test]
+    public void BigOlSheet()
+    {
+        Either<SheetDefinition, string> res = new RollParser().Parse(
+            """
+// Imported from dndbeyond PDF
+// Character: Merric Thorngage
+
+Proficiency=4
+STR=9
+STRMOD=(@STR-10)/2
+DEX=19
+DEXMOD=(@DEX-10)/2
+CON=12
+CONMOD=(@CON-10)/2
+INT=13
+INTMOD=(@INT-10)/2
+WIS=10
+WISMOD=(@WIS-10)/2
+CHA=18
+CHAMOD=(@CHA-10)/2
+
+=== Attacks ===
+Shortbow: d20 +8 => (1d6+4) Piercing
+Unarmed Strike: d20 +3 => (0) Bludgeoning
+
+=== Saving Throws ===
+Strength:@STRMOD
+Dexterity:@DEXMOD + @Proficiency
+Constitution:@CONMOD
+Intelligence:@INTMOD + @Proficiency
+Wisdom:@WISMOD
+Charisma:@CHAMOD
+
+
+=== Skills ===
+Acrobatics: @DEXMOD + @Proficiency
+Animal Handling: @CHAMOD 
+Arcana: @INTMOD 
+Athletics: @STRMOD 
+Deception: @CHAMOD + @Proficiency
+History: @INTMOD 
+Insight: @WISMOD 
+Intimidation: @CHAMOD 
+Investigation: @INTMOD + @Proficiency * 2
+Medicine: @WISMOD 
+Nature: @INTMOD 
+Perception: @WISMOD 
+Performance: @CHAMOD + @Proficiency * 2
+Persuasion: @CHAMOD 
+Religion: @INTMOD 
+Sleight Of Hand: @DEXMOD + @Proficiency
+Stealth: @DEXMOD + @Proficiency * 2
+Survival: @WISMOD 
+
+
+=== Other ===
+Initiative: d20 +4
+"""
+        );
+        var sheet = res.Match(x => x,
+            error =>
+            {
+                Assert.Fail(error);
+                throw new Exception();
+            }
+        );
+        
     }
 }

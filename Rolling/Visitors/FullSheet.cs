@@ -1,7 +1,7 @@
 ﻿using System.Collections.Immutable;
 using Rolling.Models.Definitions;
 using Rolling.Models.Rolls;
-using Rolling.Utilities;
+using Utilities;
 
 namespace Rolling.Visitors;
 

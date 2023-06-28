@@ -1,5 +1,5 @@
 ﻿using System.Collections.Immutable;
-using Rolling.Utilities;
+using Utilities;
 
 namespace Rolling.Models.Definitions;
 

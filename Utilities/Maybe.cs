@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Rolling.Utilities;
+namespace Utilities;
 
 public readonly struct Maybe<T> : IEquatable<Maybe<T>>
 {

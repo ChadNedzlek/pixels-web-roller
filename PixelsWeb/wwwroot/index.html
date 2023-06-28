@@ -36,6 +36,15 @@
             const toast = bootstrap.Toast.getOrCreateInstance(document.getElementById(id))
             toast.show();
         }
+        
+        function hideAndClearModal(id) {
+            const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById(id));
+            const form = document.getElementById(id + "-form");
+            if (form) {
+                form.reset();
+            }
+            modal.hide();
+        }
     </script>
 </body>
 

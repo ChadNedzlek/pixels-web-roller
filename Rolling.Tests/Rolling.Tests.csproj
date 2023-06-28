@@ -17,6 +17,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Rolling\Rolling.csproj" />
+      <ProjectReference Include="..\Utilities\Utilities.csproj" />
     </ItemGroup>
 
 </Project>

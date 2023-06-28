@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using Rolling.Models.Definitions;
-using Rolling.Utilities;
+using Utilities;
 
 namespace Rolling.Visitors;
 

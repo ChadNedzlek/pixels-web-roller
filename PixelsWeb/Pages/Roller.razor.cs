@@ -1,12 +1,14 @@
 ﻿using System.Collections.Immutable;
+using CharacterSheetImporter;
+using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.JSInterop;
 using PixelsBlazorInterop;
 using Rolling;
 using Rolling.Models.Definitions;
 using Rolling.Models.Rolls;
 using Rolling.Parsing;
-using Rolling.Utilities;
 using Rolling.Visitors;
+using Utilities;
 
 namespace PixelsWeb.Pages;
 
@@ -51,6 +53,8 @@ public partial class Roller : IAsyncDisposable
     private string _currentSheetName;
     private double _rotAnimation;
     private Timer _rotationAnimation;
+    private string _importText;
+    private bool _isLoading;
 
     private async Task ConnectPixels()
     {
@@ -328,5 +332,38 @@ public partial class Roller : IAsyncDisposable
         _sheetDefinition = Maybe<SheetDefinition>.None;
         _sheet = Maybe<EvaluatedSheet<Maybe<RollExpressionResult>>>.None;
         _availableSheets.Add(_currentSheetName);
+    }
+
+    private async Task ImportFile(InputFileChangeEventArgs args)
+    {
+        _isLoading = true;
+        StateHasChanged();
+        await JsRuntime.InvokeVoidAsync("hideAndClearModal", "import-modal");
+        try
+        {
+            await using Stream stream = args.File.OpenReadStream(maxAllowedSize: 10_000_000);
+            Maybe<ImportedSheet> parsed = await SheetImport.ImportSheet(stream);
+            if (parsed.TryValue(out ImportedSheet sheet))
+            {
+                if (!_availableSheets.Contains(sheet.Name))
+                {
+                    _availableSheets.Add(sheet.Name);
+                    _currentSheetName = sheet.Name;
+                    _rollText = sheet.SheetText;
+                    await ParseAndSaveRolls(sheet.SheetText);
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"Failed to import sheet: {e}");
+        }
+        _isLoading = false;
+        StateHasChanged();
+    }
+
+    private async Task ImportTextSubmitted()
+    {
+        await JsRuntime.InvokeVoidAsync("hideAndClearModal", "import-modal");
     }
 }

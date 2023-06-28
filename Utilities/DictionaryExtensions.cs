@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Numerics;
 
-namespace Rolling.Utilities;
+namespace Utilities;
 
 public static class DictionaryExtensions
 {

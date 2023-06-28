@@ -97,3 +97,24 @@ a, .btn-link {
     .loading-progress-text:after {
         content: var(--blazor-load-percentage-text, "Loading");
     }
+
+.text-overlay {
+    text-align: center;
+    position: relative;
+    margin: 0;
+}
+
+.text-overlay hr {
+    width: 80%;
+    border-top: 2px solid #000;
+    margin: 0 auto;
+    padding: 0;
+}
+
+.text-overlay span {
+    display: inline-block;
+    top: -0.7em;
+    background: white;
+    padding: 0 1em;
+    position: relative;
+}

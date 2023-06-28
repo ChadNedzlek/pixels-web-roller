@@ -2,7 +2,7 @@
 using FluentAssertions;
 using FluentAssertions.Execution;
 using FluentAssertions.Primitives;
-using Rolling.Utilities;
+using Utilities;
 
 namespace Rolling.Tests;
 

@@ -1,6 +1,6 @@
 ﻿using System.Collections.Immutable;
 using Rolling.Models;
-using Rolling.Utilities;
+using Utilities;
 
 namespace Rolling.Visitors;
 

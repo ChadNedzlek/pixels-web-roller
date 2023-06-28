@@ -2,7 +2,6 @@
 using Rolling.Models;
 using Rolling.Models.Definitions;
 using Rolling.Models.Definitions.Expressions;
-using Rolling.Utilities;
 using ConstantExpression = Rolling.Models.Definitions.Expressions.ConstantExpression;
 
 namespace Rolling.Visitors;
