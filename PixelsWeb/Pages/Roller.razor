@@ -305,6 +305,10 @@ Attack 2: d20 + 5 => 3d6 + 5</code></pre></li>
         {
             if (d.Dropped)
                 return Dropped();
+            if (singleRollResult.CriticalFailure)
+                return CritFail();
+            if (singleRollResult.CriticalSuccess)
+                return CritSuccess();
             if (d.Value.Id.IsNone)
                 return null;
             return RolledDie();
@@ -332,6 +336,20 @@ Attack 2: d20 + 5 => 3d6 + 5</code></pre></li>
     private RenderFragment GroupText(RollResultGroup group)
     {
         RenderFragment label = null;
+        
+        if (_showDetails)
+        {
+            return @<span>
+                @RenderSingleGroupItem(group.Items[0])
+                @foreach (var (item, op) in group.Items.Skip(1).Zip(group.Operations))
+                {
+                   <span>@op</span>
+                   
+                   @RenderSingleGroupItem(item)
+                } @group.Tag.OrDefault()
+           </span>;
+        }
+
         var dice = group.Items.OfType<SingleRollResult>().ToList();
         if (dice.Any(d => d.Rolls.Any(r => !r.Value.Id.IsNone)))
         {
@@ -345,21 +363,6 @@ Attack 2: d20 + 5 => 3d6 + 5</code></pre></li>
         {
             label = CritSuccess();
         }
-        
-        if (_showDetails)
-        {
-            return @<span>
-                @RenderSingleGroupItem(group.Items[0])
-                @foreach (var (item, op) in group.Items.Skip(1).Zip(group.Operations))
-                {
-                   <span>@op</span>
-                   
-                   @RenderSingleGroupItem(item)
-                }
-                @label @group.Tag.OrDefault()
-           </span>;
-        }
-
         string color = "text-bg-dark";
         if (dice.Any(d => d.Rolls.Any(r => !r.Value.Id.IsNone)))
         {
