@@ -280,8 +280,10 @@ Attack 2: d20 + 5 => 3d6 + 5</code></pre></li>
        </span>;
     }
 
-    private RenderFragment CritFail() => @<span class="visually-hidden">(crit. fail)</span>;
-    private RenderFragment CritSuccess() => @<span class="visually-hidden">(crit. fail)</span>;
+    private RenderFragment RolledDie() => @<span class="bi bi-dice-6" alt="(crit. fail)"></span>;
+    private RenderFragment CritFail() => @<span class="bi bi-caret-down" alt="(crit. fail)"></span>;
+    private RenderFragment CritSuccess() => @<span class="bi bi-caret-up" alt="(crit. success)"></span>;
+    private RenderFragment Dropped() => @<span class="bi bi-box-arrow-down" alt="(dropped)"></span>;
 
     private RenderFragment RenderDieRoll(SingleRollResult singleRollResult)
     {
@@ -298,19 +300,22 @@ Attack 2: d20 + 5 => 3d6 + 5</code></pre></li>
                 return "text-bg-dark";
             return "text-bg-primary";
         }
+        
+        RenderFragment GetIcon(AssignedDieRoll d)
+        {
+            if (d.Dropped)
+                return Dropped();
+            if (d.Value.Id.IsNone)
+                return null;
+            return RolledDie();
+        }
 
         return @<span>
             @foreach (var roll in singleRollResult.Rolls)
             {
-            <span class="badge @CalcColor(roll)">
-                @roll.Value.Result
-                @if (roll.Dropped)
-                {
-                    <span class="visually-hidden">(dropped)</span>
-                }
-            </span>
+            <span class="badge @CalcColor(roll)">@roll.Value.Result @GetIcon(roll)</span>
             }
-            </span>;
+        </span>;
     }
 
     private RenderFragment RenderConstant(RollResult rollResult) => @<span class="badge text-bg-dark">@rollResult.Value </span>;
@@ -326,15 +331,19 @@ Attack 2: d20 + 5 => 3d6 + 5</code></pre></li>
 
     private RenderFragment GroupText(RollResultGroup group)
     {
-        RenderFragment hidden = null;
+        RenderFragment label = null;
         var dice = group.Items.OfType<SingleRollResult>().ToList();
+        if (dice.Any(d => d.Rolls.Any(r => !r.Value.Id.IsNone)))
+        {
+            label = RolledDie();
+        }
         if (dice.Any(d => d.CriticalFailure))
         {
-            hidden = CritFail();
+            label = CritFail();
         }
         if (dice.Any(d => d.CriticalSuccess))
         {
-            hidden = CritSuccess();
+            label = CritSuccess();
         }
         
         if (_showDetails)
@@ -347,7 +356,7 @@ Attack 2: d20 + 5 => 3d6 + 5</code></pre></li>
                    
                    @RenderSingleGroupItem(item)
                 }
-                @hidden @group.Tag.OrDefault()
+                @label @group.Tag.OrDefault()
            </span>;
         }
 
@@ -365,7 +374,7 @@ Attack 2: d20 + 5 => 3d6 + 5</code></pre></li>
             color = "text-bg-success";
         }
 
-        return @<span class="badge @color">@group.Value @hidden @group.Tag.OrDefault()</span>;
+        return @<span class="badge @color">@group.Value @label @group.Tag.OrDefault()</span>;
     }
 
 }
