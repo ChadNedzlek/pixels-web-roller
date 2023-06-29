@@ -228,42 +228,76 @@ Attack 2: d20 + 5 => 3d6 + 5</code></pre></li>
 
     int sectionId = 0;
     <div class="accordion" id="roll-accordion">
-        @foreach (EvaluatedSection<Maybe<RollExpressionResult>> sect in sheet.Sections)
+        @foreach (var (section, options) in sheet.Sections.Zip(_sectionRenderOptions))
         {
             sectionId++;
             int id = 1;
             <div class="accordion-item">
                 <h2 class="accordion-header">
                     <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-@sectionId" aria-expanded="true" aria-controls="collapse-@sectionId">
-                        @sect.Name.Or($"Section {sectionId}")
+                        <button class="btn btn-outline-primary btn-sm me-2" data-bs-toggle="collapse" data-bs-target="#collapse-config-section-@sectionId" aria-expanded="false" aria-controls="collapse-config-section-@sectionId">
+                            <span class="bi bi-gear"><span class="visually-hidden">config section</span></span>
+                        </button>
+                        
+                        @options.Name
                     </button>
                 </h2>
                 <div id="collapse-@sectionId" class="accordion-collapse collapse show">
                     <div class="accordion-body">
+                        <div class="collapse" id="collapse-config-section-@sectionId">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="section-compact-check-@sectionId" @bind="options.Compact" @bind:after="SaveRenderOptions">
+                                <label class="form-check-label" for="section-compact-check-@sectionId">Compact Display</label>
+                            </div>
+                            <hr/>
+                        </div>
                         <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 row-cols-xl-4">
-                            @foreach (EvaluatedRoll<Maybe<RollExpressionResult>> roll in sect.Rolls)
+                            @foreach (EvaluatedRoll<Maybe<RollExpressionResult>> roll in section.Rolls)
                             {
                                 id++;
                                 <div class="col">
                                     <div class="card">
-                                        <div class="card-header">@roll.Definition.Name.Or($"Roll {id}")</div>
-                                        <div class="card-body">
-                                            <h6 class="card-subtitle mb-2 text-body-secondary">
-                                                @_describer.Evaluate(roll.Definition.Expression)
-                                                @roll.Definition.ConditionalExpression.Match(e => " => " + _describer.Evaluate(e), "")
-                                            </h6>
-                                            @if (roll.Value.TryValue(out var res))
-                                            {
-                                                @DieText(res)
-                                                ;
-                                                if (roll.ConditionalValue.OrDefault().TryValue(out var cond))
+                                        @if (options.Compact)
+                                        {
+                                            <div class="card-body">
+                                                @roll.Definition.Name.Or($"Roll {id}"): 
+                                                @if (roll.Value.TryValue(out var res))
                                                 {
-                                                    <span> => </span>
-                                                    @DieText(cond)
-                                                    ;
+                                                    @DieText(res)
+                                                    if (roll.ConditionalValue.OrDefault().TryValue(out var cond))
+                                                    {
+                                                        <span> => </span>
+                                                        @DieText(cond)
+                                                    }
                                                 }
-                                            }
-                                        </div>
+                                                else
+                                                {
+                                                    <span class="text-muted">
+                                                        @_describer.Evaluate(roll.Definition.Expression)
+                                                        @roll.Definition.ConditionalExpression.Match(e => " => " + _describer.Evaluate(e), "")
+                                                    </span>
+                                                }
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="card-header">@roll.Definition.Name.Or($"Roll {id}")</div>
+                                            <div class="card-body">
+                                                <h6 class="card-subtitle mb-2 text-body-secondary">
+                                                    @_describer.Evaluate(roll.Definition.Expression)
+                                                    @roll.Definition.ConditionalExpression.Match(e => " => " + _describer.Evaluate(e), "")
+                                                </h6>
+                                                @if (roll.Value.TryValue(out var res))
+                                                {
+                                                    @DieText(res)
+                                                    if (roll.ConditionalValue.OrDefault().TryValue(out var cond))
+                                                    {
+                                                        <span> => </span>
+                                                        @DieText(cond)
+                                                    }
+                                                }
+                                            </div>
+                                        }
                                     </div>
                                 </div>
                             }

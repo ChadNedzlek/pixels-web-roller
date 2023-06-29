@@ -4,4 +4,16 @@ using Utilities;
 
 namespace Rolling.Visitors;
 
-public record struct EvaluatedSection<TValue>(Maybe<string> Name, RollSectionType Type, ImmutableList<EvaluatedRoll<TValue>> Rolls);
+public class EvaluatedSection<TValue>
+{
+    public EvaluatedSection(Maybe<string> name, RollSectionType type, ImmutableList<EvaluatedRoll<TValue>> rolls)
+    {
+        Name = name;
+        Type = type;
+        Rolls = rolls;
+    }
+
+    public Maybe<string> Name { get; }
+    public RollSectionType Type { get; }
+    public ImmutableList<EvaluatedRoll<TValue>> Rolls { get; }
+}

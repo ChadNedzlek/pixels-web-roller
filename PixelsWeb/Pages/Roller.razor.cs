@@ -19,13 +19,24 @@ public partial class Roller : IAsyncDisposable
         private bool _rotating;
     }
 
+    private class SectionRenderOptions
+    {
+        public SectionRenderOptions(string name)
+        {
+            Name = name;
+        }
+
+        public string Name { get; }
+        public bool Compact { get; set; }
+    }
+
     private readonly RollDescriptionEvaluator _describer = new();
     private readonly List<IPixelDevice> _connectedDice = new();
     private readonly HashSet<IPixelDevice> _rollingDice = new();
     private readonly List<IPixelDevice> _completedDice = new();
     private readonly Dictionary<long, AnimationState> _animations = new();
+    private List<SectionRenderOptions> _sectionRenderOptions = new();
     private readonly RollParser _parser = new();
-    
     private string _rollText;
     private string _errorMessage;
     private string _rollErrorText;
@@ -34,6 +45,13 @@ public partial class Roller : IAsyncDisposable
     private bool _isBluetoothSupported = true;
     private bool _showDetails = false;
     private Timer _rollTimer;
+
+    private List<string> _availableSheets = SampleSheet.Available.Keys.ToList();
+    private string _currentSheetName;
+    private double _rotAnimation;
+    private Timer _rotationAnimation;
+    private string _importText;
+    private bool _isLoading;
 
     private string CurrentSheetName
     {
@@ -48,13 +66,6 @@ public partial class Roller : IAsyncDisposable
             StateHasChanged();
         }
     }
-
-    private List<string> _availableSheets = SampleSheet.Available.Keys.ToList();
-    private string _currentSheetName;
-    private double _rotAnimation;
-    private Timer _rotationAnimation;
-    private string _importText;
-    private bool _isLoading;
 
     private async Task ConnectPixels()
     {
@@ -136,7 +147,7 @@ public partial class Roller : IAsyncDisposable
         }
     }
 
-    private async Task ParseAndSaveRolls(string value)
+    private async Task ParseRolls(string value, bool resetOptions, bool saveSheet)
     {
         if (value == null) return;
         Either<SheetDefinition, string> res = _parser.TryParse(value);
@@ -144,9 +155,11 @@ public partial class Roller : IAsyncDisposable
             async result =>
             {
                 _errorMessage = null;
-                _sheetDefinition = result;
-                _sheet = result.Empty();
-                await SaveState();
+                SetSheet(_rollText, result, resetOptions);
+                if (saveSheet)
+                {
+                    await SaveState(resetOptions);
+                }
             },
             errorMessage =>
             {
@@ -158,7 +171,7 @@ public partial class Roller : IAsyncDisposable
 
     private async Task CurrentSheetRenamed()
     {
-        await SaveState();
+        await SaveState(false);
     }
 
     private async Task CurrentSheetChanged()
@@ -169,7 +182,7 @@ public partial class Roller : IAsyncDisposable
 
     private Task RollChanged()
     {
-        return ParseAndSaveRolls(_rollText);
+        return ParseRolls(_rollText, false, true);
     }
 
     protected override async Task OnInitializedAsync()
@@ -222,9 +235,7 @@ public partial class Roller : IAsyncDisposable
         
         SampleSheet sampleSheet = SampleSheet.Available[_currentSheetName];
         
-        _rollText = sampleSheet.Text;
-        _sheetDefinition = sampleSheet.Sheet;
-        _sheet = sampleSheet.Sheet.Empty();
+        SetSheet(sampleSheet.Text, sampleSheet.Sheet, true);
         StateHasChanged();
     }
 
@@ -232,21 +243,43 @@ public partial class Roller : IAsyncDisposable
     {
         _currentSheetName = name;
         _rollText = await LocalStorage.GetItemAsync<string>("sheet:" + name);
+        Console.WriteLine("Loaded options");
+        var savedOptions = await LocalStorage.GetItemAsync<List<SectionRenderOptions>>("opt:" + name);
+        if (savedOptions != null)
+        {
+            Console.WriteLine("Applying saved options");
+            _sectionRenderOptions = savedOptions;
+        }
+        
         if (_rollText == null)
         {
             if (SampleSheet.Available.TryGetValue(name, out var sample))
             {
-                _rollText = sample.Text;
-                _sheetDefinition = sample.Sheet;
-                _sheet = sample.Sheet.Empty();
+                SetSheet(sample.Text, sample.Sheet, savedOptions == null);
             }
         }
         else
         {
-            await ParseAndSaveRolls(_rollText);
+            await ParseRolls(_rollText, savedOptions == null, false);
         }
 
+
         StateHasChanged();
+    }
+
+    private void SetSheet(string sheetText, SheetDefinition sheetDefinition, bool resetOptions)
+    {
+        _rollText = sheetText;
+        _sheetDefinition = sheetDefinition;
+        if (resetOptions || sheetDefinition.Sections.Count != _sectionRenderOptions.Count)
+        {
+            Console.WriteLine("Resetting options");
+            _sectionRenderOptions = sheetDefinition.Sections
+                .Select((s, i) => new SectionRenderOptions(s.Name.Or($"Section {i + 1}")))
+                .ToList();
+        }
+
+        _sheet = sheetDefinition.Empty();
     }
 
     private async Task DeleteCurrentSheet()
@@ -263,10 +296,10 @@ public partial class Roller : IAsyncDisposable
             await LoadSheet(_availableSheets[0]);
         }
 
-        await SaveState();
+        await SaveState(false);
     }
 
-    private async Task SaveState()
+    private async Task SaveState(bool saveOptions)
     {
         if (SampleSheet.Available.ContainsKey(_currentSheetName))
             return;
@@ -287,12 +320,34 @@ public partial class Roller : IAsyncDisposable
                 
                 continue;
             }
+            
+            if (item.StartsWith("opt:"))
+            {
+                var name = item[4..];
+                if (!_availableSheets.Contains(name))
+                {
+                    Console.WriteLine($"Removing deleted options: {name}");
+                    await LocalStorage.RemoveItemAsync(item);
+                }
+                
+                continue;
+            }
             Console.WriteLine($"Removing unexpected local storage key: {item}");
             await LocalStorage.RemoveItemAsync(item);
         }
 
         Console.WriteLine($"Saving current sheet: {_currentSheetName}");
         await LocalStorage.SetItemAsync("sheet:" + _currentSheetName, _rollText);
+        if (saveOptions)
+        {
+            await SaveRenderOptions();
+        }
+    }
+
+    private async Task SaveRenderOptions()
+    {
+        Console.WriteLine("Saving options!");
+        await LocalStorage.SetItemAsync("opt:" + _currentSheetName, _sectionRenderOptions);
     }
 
     private void RollAll()
@@ -307,6 +362,7 @@ public partial class Roller : IAsyncDisposable
     
     public async ValueTask DisposeAsync()
     {
+        await SaveRenderOptions();
         foreach (var die in _connectedDice)
         {
             await die.DisposeAsync();
@@ -331,6 +387,7 @@ public partial class Roller : IAsyncDisposable
         _rollText = "";
         _sheetDefinition = Maybe<SheetDefinition>.None;
         _sheet = Maybe<EvaluatedSheet<Maybe<RollExpressionResult>>>.None;
+        _sectionRenderOptions = new List<SectionRenderOptions>();
         _availableSheets.Add(_currentSheetName);
     }
 
@@ -350,7 +407,7 @@ public partial class Roller : IAsyncDisposable
                     _availableSheets.Add(sheet.Name);
                     _currentSheetName = sheet.Name;
                     _rollText = sheet.SheetText;
-                    await ParseAndSaveRolls(sheet.SheetText);
+                    await ParseRolls(sheet.SheetText, true, true);
                 }
             }
         }
