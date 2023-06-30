@@ -17,12 +17,12 @@ public static class Grammar
 
     public static readonly Parser<string> Words = Letter.Or(Char('_'))
         .With(Letter.Or(Digit).Or(Char('_')).Or(Char('-')).Or(Char(' ')).Many())
-        .Select((l, r) => (l + string.Join("", r)).Trim());
+        .MapWith((l, r) => (l + string.Join("", r)).Trim());
 
-    public static readonly Parser<DiceMod> CritSuccessMod = Char('c').Before(Char('>')).FollowedBy(Num).Select(n => new DiceMod(DiceModType.CriticalSuccess, n));
-    public static readonly Parser<DiceMod> CritFailMod = Char('c').Before(Char('<')).FollowedBy(Num).Select(n => new DiceMod(DiceModType.CriticalFailure, n));
-    public static readonly Parser<DiceMod> KeepMod = Char('k').FollowedBy(Num.Or(Char('h').Return(1))).Select(n => new DiceMod(DiceModType.Keep, n));
-    public static readonly Parser<DiceMod> DropMod = Char('d').FollowedBy(Num).Select(n => new DiceMod(DiceModType.Drop, n));
+    public static readonly Parser<DiceMod> CritSuccessMod = Char('c').ThenDiscard(Char('>')).DiscardThen(Num).Select(n => new DiceMod(DiceModType.CriticalSuccess, n));
+    public static readonly Parser<DiceMod> CritFailMod = Char('c').ThenDiscard(Char('<')).DiscardThen(Num).Select(n => new DiceMod(DiceModType.CriticalFailure, n));
+    public static readonly Parser<DiceMod> KeepMod = Char('k').DiscardThen(Num.Or(Char('h').Return(1))).Select(n => new DiceMod(DiceModType.Keep, n));
+    public static readonly Parser<DiceMod> DropMod = Char('d').DiscardThen(Num).Select(n => new DiceMod(DiceModType.Drop, n));
 
     public static readonly Parser<DiceMod> AllMod = CritSuccessMod
         .Or(CritFailMod)
@@ -32,22 +32,22 @@ public static class Grammar
     public static readonly Parser<ImmutableList<DiceMod>> ModList = AllMod.Many().Select(d => d.ToImmutableList());
 
     public static readonly Parser<DiceSpecification> Dice = Num.Optional()
-        .Before(Char('d'))
+        .ThenDiscard(Char('d'))
         .With(Num)
         .With(ModList)
         .SpaceAround()
-        .Select(
+        .MapWith(
             (n, c, m) => new DiceSpecification(n.Or(1), c, m)
         );
         
-    public static readonly Parser<DiceExpression> Reference = Char('@').FollowedBy(Identifier).Select(id => (DiceExpression) new ReferenceExpression(id));
+    public static readonly Parser<DiceExpression> Reference = Char('@').DiscardThen(Identifier).Select(id => (DiceExpression) new ReferenceExpression(id));
     public static readonly Parser<DiceExpression> Constant = Num.Select(id => (DiceExpression)new ConstantExpression(id));
     public static readonly Parser<DiceExpression> Roll = Dice.Select(d => (DiceExpression)new DiceRollExpression(d));
 
     public static readonly Parser<DiceExpression> BaseExpression = Reference.Or(Roll).Or(Constant);
         
     public static readonly Parser<DiceExpression> FinalRef = Ref(() => FinalExpr);
-    public static readonly Parser<DiceExpression> PrimaryExpression = BaseExpression.Or(Char('(').SpaceAround().FollowedBy(FinalRef).Before(Char(')').SpaceAround()));
+    public static readonly Parser<DiceExpression> PrimaryExpression = BaseExpression.Or(Char('(').SpaceAround().DiscardThen(FinalRef).ThenDiscard(Char(')').SpaceAround()));
     public static readonly Parser<DiceExpression> TaggedExpression =
         PrimaryExpression.Then(e => Words.SpaceAround().Select(w => (DiceExpression)new TaggedExpression(e, w)))
             .Or(PrimaryExpression);
@@ -57,11 +57,11 @@ public static class Grammar
     public static readonly Parser<DiceExpression> FinalExpr = AddExpr;
 
     public static readonly Parser<DiceRollDefinition> RollDefinition =
-        CharExcept(":\r\n").ManyString(trim: true).Before(Char(':').SpaceAround())
+        CharExcept(":\r\n").ManyString(trim: true).ThenDiscard(Char(':').SpaceAround())
             .Optional()
             .With(FinalExpr)
-            .With(String("=>").SpaceAround().FollowedBy(FinalExpr).Optional())
-            .Select((id, ex, res) => new DiceRollDefinition(id.Maybe(), ex, res.Maybe()))
+            .With(String("=>").SpaceAround().DiscardThen(FinalExpr).Optional())
+            .MapWith((id, ex, res) => new DiceRollDefinition(id.Maybe(), ex, res.Maybe()))
             .SpaceAround()
             .EndOfLine();
     
@@ -70,9 +70,9 @@ public static class Grammar
 
     public static readonly Parser<VariableDefinition> VariableDefinition =
         Identifier
-            .Before(Char('=').SpaceAround())
+            .ThenDiscard(Char('=').SpaceAround())
             .With(FinalExpr)
-            .Select((id, ex) => new VariableDefinition(id, ex))
+            .MapWith((id, ex) => new VariableDefinition(id, ex))
             .SpaceAround()
             .EndOfLine();
 
@@ -81,29 +81,29 @@ public static class Grammar
 
     public static readonly Parser<(RollSectionType type, string w)> EqualSectionHeader =
         WhiteSpace.Many()
-        .FollowedBy(Char('='))
+        .DiscardThen(Char('='))
         .AtLeastOnce()
-        .FollowedBy(
+        .DiscardThen(
             CharExcept("=\r\n").ManyString(trim: true).SpaceAround().Select(w => (type: RollSectionType.RepeatDice, w))
         )
-        .Before(Char('=').AtLeastOnce())
+        .ThenDiscard(Char('=').AtLeastOnce())
         .EndOfLine();
 
     public static readonly Parser<(RollSectionType type, string w)> StarSectionHeader = 
         WhiteSpace.Many()
-        .FollowedBy(Char('*'))
+        .DiscardThen(Char('*'))
         .AtLeastOnce()
-        .FollowedBy(
+        .DiscardThen(
             CharExcept("*\r\n").ManyString(trim: true).SpaceAround().Select(w => (type: RollSectionType.UniqueDicePerRoll, w))
         )
-        .Before(Char('*').AtLeastOnce())
+        .ThenDiscard(Char('*').AtLeastOnce())
         .EndOfLine();
 
     public static readonly Parser<SheetDefinitionSection> Section =
         EqualSectionHeader.Or(StarSectionHeader).Optional()
-        .Before(WhiteSpace.Many())
+        .ThenDiscard(WhiteSpace.Many())
         .With(RollDefinitions.SpaceAround())
-        .Select(
+        .MapWith(
             (s, d) => new SheetDefinitionSection(
                 s.Maybe().Select(x => x.w),
                 s.Maybe().Select(x => x.type).Or(RollSectionType.RepeatDice),
@@ -115,5 +115,5 @@ public static class Grammar
         Section.AtLeastOnce().Select(s => s.ToImmutableList());
 
     public static readonly Parser<SheetDefinition> Sheet =
-        VariableDefinitions.With(Sections).Select((v, s) => new SheetDefinition(v, s));
+        VariableDefinitions.With(Sections).MapWith((v, s) => new SheetDefinition(v, s));
 }

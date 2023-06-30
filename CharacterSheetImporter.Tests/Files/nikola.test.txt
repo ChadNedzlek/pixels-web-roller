@@ -1,0 +1,94 @@
+﻿Nikola Ag'tharen
+Male kyton-spawn tiefling soul weaver (shepherd of the lost) 6 (Pathfinder Player Companion: Blood of Fiends 22, Pathfinder RPG Bestiary 264)
+NG Medium outsider (native)
+Init +1; Senses darkvision 60 ft.; Perception +2
+--------------------
+Defense
+--------------------
+AC 12, touch 11, flat-footed 11 (+1 armor, +1 Dex)
+hp 48 (6d6+22)
+Fort +6 (+2 trait bonus vs. poison or drugs (+4 to avoid effects of alcohol)), Ref +4, Will +6; -1 penalty vs. fear spells and effects
+Resist cold 5, electricity 5, fire 5
+Weaknesses addictive casting, focus casting, reverberations, rigorous concentration, somatic casting, somatic casting, unnatural transformation, verbal casting, witchmarked
+--------------------
+Offense
+--------------------
+Speed 30 ft. (20 ft. in armor), fly 30 ft. (perfect)
+Melee +2 flaming burst greatsword -1 (2d6/19-20 plus 1d6 fire) or
+   akitonian blade -2 (1d8-1/×3)
+Ranged nearfiring bow +0 (1d6-2/×3)
+Space 5 ft.; Reach 5 ft. (10 ft. with akitonian blade)
+Special Attacks channel positive energy 9/day (DC 19, 3d6), siphon health
+--------------------
+Statistics
+--------------------
+Str 7, Dex 13, Con 16, Int 10, Wis 11, Cha 22
+Base Atk +3; CMB +1; CMD 12
+Feats Alertness, Extra Magic Talent, Extra Magic Talent, Familiar Bond, Forged Mark, Hidden Heretic, Poppet Familiar
+Traits caretaker, house of green mothers pupil, iron liver
+Skills Acrobatics -2 (-6 to jump), Bluff +6 (+10 to tell a lie), Diplomacy +15, Fly +6, Heal +12 (+14 to treat poison, +14 to provide first aid), Knowledge (arcana) +7, Knowledge (history) +4, Knowledge (religion) +4, Perception +2, Sense Motive +6, Spellcraft +9, Use Magic Device +7; Racial Modifiers curious spirit
+Languages Common, Infernal
+SQ aid the dead, beguiling liar[ARG], blessing, bound nexus, casting, corpse manipulation, cure, detect loyalties, divine, divine alignment, divine fate, divine life, divine shapechanger, divine undead, drawback feat, easy focus, empowered abilities, esoteric healing, exorcism, heal, invigorate, lovelorn soul, not alone, pain, read magic, reanimate, restore, secret shame, serendipity, shapeshifting (2 traits), sustained necromancy, tomb of flesh 3d6
+Combat Gear healer's kit; Other Gear +2 flaming burst greatsword, akitonian blade[APG], nearfiring bow[UE], bracers of armor +1, clear spindle ioun stone, handy haversack, headband of alluring charisma +2, mantle of the darkest night[HA], ring of sustenance, sleeves of many garments[UE], specialized healer's satchel (treatment), medium tent[APG], griffon, light horse, skeleton, +1 greatsword, chainmail barding, skeleton, 30 gp
+--------------------
+Special Abilities
+--------------------
+Addictive Casting (No Addiction, DC 10) You risk gaining an addiction when you spend spell points
+Aid the Dead +2 (6 temp HP) (Su) Expend a soul to grant an undead creature a profane bonus to attacks, saves, and turn resistance
+Alteration: Shapeshifting (2 traits) You can apply a shapeshift to yourself
+Beguiling Liar +4 to Bluff to tell a lie.
+Blessing +1 (DC 19) (Su) Grant a creature a blessing that gives +1 to all saves for 24 hours
+Bound Nexus (9/day) You use summoned souls to power a number of special abilities
+Casting (CL 6, MSB +6, MSD 17, Concentration +12, DC 19) You can cast sphere effects.
+Curious Spirit +12 (Su) Expend a soul to add a bonus to a Knowledge check or to speak with a dead body
+Darkvision (60 feet) You can see in the dark (black and white only).
+Death: Corpse Manipulation Decompose flesh from a corpse, add flesh to a skeleton, preserve a corpse, or alter its appearance
+Death: Reanimate (Max HD: 14) Reanimate a corpse as a skeleton or zombie
+Death: Sustained Necromancy (-Choose-) Concentrate on a reanimation to maintain it without spending a SP
+Death: Tomb of Flesh 3d6 With a melee touch attack, absorb a creature into your body as the swallow whole ability
+Deliver Touch Spells Through Familiar (Su) Your familiar can deliver touch spells for you.
+Divination: Detect Loyalties Divine to detect a creature's top three loyalties
+Divination: Divine You can divine magical auras
+Divination: Divine Alignment You can divine for alignments
+Divination: Divine Fate Divine to see a creature's aura, colored by their alignment relative to yours
+Divination: Divine Life You can divine for living creatures and their general condition
+Divination: Divine Shapechanger Divine for creatures with the shapechanger type
+Divination: Divine Undead You can divine for undead creatures
+Divination: Read Magic You can read and decipher magical writing
+Drawback Feat You gain a (drawback) feat, chosen when this casting tradition is created.
+Easy Focus Maintaining a sphere effect takes a move action instead of a standard action
+Empathic Link with Familiar (Su) You have an empathic link with your Arcane Familiar.
+Empowered Abilities +1 CL when at 1/2 SP or less, +2 CL when at 1/4 SP or less
+Energy Resistance, Cold (5) You have the specified Energy Resistance against Cold attacks.
+Energy Resistance, Electricity (5) You have the specified Energy Resistance against Electricity attacks.
+Energy Resistance, Fire (5) You have the specified Energy Resistance against Fire attacks.
+Familiar Bonus:  You gain the Alertness feat while your familiar is within arm's reach.
+Fate: Exorcism Successful MSB check ends a curse, possession, or mind-affecting effect on target. You may spend an extra SP to learn who placed the effect and why
+Fate: Pain 1d4+3 Target automatically takes nonlethal damage
+Fate: Serendipity +1 Nearby allies gain luck bonuses
+Fly (30 feet, Perfect) You can fly!
+Focus Casting (DC 23) You must make a concentration check to use magic without your focus item
+Heal (60 HP) (Su) Expend a use of Channel Energy to heal a blessed target
+Hidden Heretic You may conceal your witchmark for 24 hrs, but must pass a concentration check to perform magic while it is concealed
+Life: Cure 1d8+12 (DC 19) Heal a target
+Life: Esoteric Healing You may use Life abilities to heal non-living creatures
+Life: Invigorate (Max 6 tmp HP) Grant up to 6 temporary HP to an injured target
+Life: Restore Heal a target's ability damage and remove negative conditions
+Lovelorn Soul (18 temp HP) (Su) Expend a soul to grant temporary hit points to a dying ally
+Not Alone Souls grant +2 circumstance bonus to dead, fear, neg. saves
+Poppet Familiar Use poppet as a familiar.
+Reverberations Your (word) talents emit a susurrating voice announcing the name of the word to all creatures within 15 ft. of the target when it is used and for its duration. Their effects are suppressed in a region of magical silence. You must select a (word) tale
+Rigorous Concentration +10 Concentration DC unless you increase casting time by 1 step
+Secret Shame -1 to save vs. fear effects and to DC to demoralize you. If immune to fear, lose imm but no penalties.
+Share Spells with Familiar Can cast spells with a target of "You" on the familiar with a range of touch.
+Siphon Health 3d6 (DC 19) (Su) Expend a soul to damage a living creature
+Somatic Casting You must have at least 1 hand free to use magic, and may be susceptible to ASF
+Somatic Casting You must have at least 1 hand free to use magic, and may be susceptible to ASF
+Soul Weaver Channel Positive Energy 3d6 (9/day, DC 19) (Su) Positive energy heals the living and harms the undead; negative has the reverse effect.
+Speak with Familiar (Ex) You can communicate verbally with your familiar.
+Unnatural Transformation Your shapeshift effects are obvious and never grant a Disguise bonus
+Verbal Casting You must be able to speak aloud to use magic
+Witchmarked Your magical nature is visible to observers
+
+Hero Lab and the Hero Lab logo are Registered Trademarks of LWD Technology, Inc. Free download at https://www.wolflair.com
+Pathfinder® and associated marks and logos are trademarks of Paizo Inc.®, and are used under license.

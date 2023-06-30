@@ -421,6 +421,28 @@ public partial class Roller : IAsyncDisposable
 
     private async Task ImportTextSubmitted()
     {
+        _isLoading = true;
+        StateHasChanged();
         await JsRuntime.InvokeVoidAsync("hideAndClearModal", "import-modal");
+        try
+        {
+            Maybe<ImportedSheet> parsed = await SheetImport.ImportSheet(_importText);
+            if (parsed.TryValue(out ImportedSheet sheet))
+            {
+                if (!_availableSheets.Contains(sheet.Name))
+                {
+                    _availableSheets.Add(sheet.Name);
+                    _currentSheetName = sheet.Name;
+                    _rollText = sheet.SheetText;
+                    await ParseRolls(sheet.SheetText, true, true);
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"Failed to import sheet: {e}");
+        }
+        _isLoading = false;
+        StateHasChanged();
     }
 }

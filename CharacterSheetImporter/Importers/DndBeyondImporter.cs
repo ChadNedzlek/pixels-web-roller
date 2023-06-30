@@ -11,7 +11,7 @@ using UglyToad.PdfPig.Tokens;
 
 namespace CharacterSheetImporter.Importers;
 
-public class DndBeyondImporter : ISheetImporter
+public class DndBeyondImporter : IStreamSheetImporter
 {
     public async Task<SheetImportResult> ImportAsync(Stream stream)
     {

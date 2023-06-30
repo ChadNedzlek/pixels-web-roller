@@ -3,12 +3,12 @@ using System.Collections.Immutable;
 using System.Linq;
 using FluentAssertions;
 using NUnit.Framework;
-using Rolling.Models;
 using Rolling.Models.Definitions;
 using Rolling.Models.Rolls;
 using Rolling.Parsing;
 using Rolling.Visitors;
 using Utilities;
+using TestUtilities;
 
 namespace Rolling.Tests;
 

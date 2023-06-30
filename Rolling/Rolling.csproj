@@ -11,9 +11,6 @@
         <SupportedPlatform Include="browser" />
     </ItemGroup>
     <ItemGroup>
-      <Folder Include="Utilities\" />
-    </ItemGroup>
-    <ItemGroup>
       <ProjectReference Include="..\Utilities\Utilities.csproj" />
     </ItemGroup>
 

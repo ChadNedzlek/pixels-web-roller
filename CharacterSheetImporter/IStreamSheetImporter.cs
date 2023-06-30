@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace CharacterSheetImporter;
 
-public interface ISheetImporter
+public interface IStreamSheetImporter
 {
     public Task<SheetImportResult> ImportAsync(Stream stream);
 }

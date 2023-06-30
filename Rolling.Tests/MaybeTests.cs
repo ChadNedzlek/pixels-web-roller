@@ -2,6 +2,7 @@
 using FluentAssertions;
 using NUnit.Framework;
 using Utilities;
+using TestUtilities;
 
 namespace Rolling.Tests;
 

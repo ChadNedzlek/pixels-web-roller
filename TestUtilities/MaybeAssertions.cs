@@ -4,7 +4,7 @@ using FluentAssertions.Execution;
 using FluentAssertions.Primitives;
 using Utilities;
 
-namespace Rolling.Tests;
+namespace TestUtilities;
 
 public class MaybeAssertions<T> : MaybeAssertions<T, MaybeAssertions<T>>
 {

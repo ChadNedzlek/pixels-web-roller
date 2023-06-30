@@ -12,6 +12,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CharacterSheetImporter", "C
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Utilities", "Utilities\Utilities.csproj", "{9605EA45-98AA-47A2-B940-D5F204A93204}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CharacterSheetImporter.Tests", "CharacterSheetImporter.Tests\CharacterSheetImporter.Tests.csproj", "{69501EAD-C570-4353-B08A-25BD7EB81E19}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestUtilities", "TestUtilities\TestUtilities.csproj", "{B052CE89-C727-4939-BB83-4BDD2EE56C2B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -42,5 +46,13 @@ Global
 		{9605EA45-98AA-47A2-B940-D5F204A93204}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9605EA45-98AA-47A2-B940-D5F204A93204}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9605EA45-98AA-47A2-B940-D5F204A93204}.Release|Any CPU.Build.0 = Release|Any CPU
+		{69501EAD-C570-4353-B08A-25BD7EB81E19}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{69501EAD-C570-4353-B08A-25BD7EB81E19}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{69501EAD-C570-4353-B08A-25BD7EB81E19}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{69501EAD-C570-4353-B08A-25BD7EB81E19}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B052CE89-C727-4939-BB83-4BDD2EE56C2B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B052CE89-C727-4939-BB83-4BDD2EE56C2B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B052CE89-C727-4939-BB83-4BDD2EE56C2B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B052CE89-C727-4939-BB83-4BDD2EE56C2B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

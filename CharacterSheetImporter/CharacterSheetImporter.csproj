@@ -5,10 +5,13 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <PackageReference Include="JetBrains.Annotations" Version="2022.3.1" />
       <PackageReference Include="PdfPig" Version="0.1.8" />
+      <PackageReference Include="Sprache" Version="3.0.0-develop-00049" />
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\Rolling\Rolling.csproj" />
       <ProjectReference Include="..\Utilities\Utilities.csproj" />
     </ItemGroup>
 

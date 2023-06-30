@@ -1,6 +1,6 @@
 ﻿using Utilities;
 
-namespace Rolling.Tests;
+namespace TestUtilities;
 
 public static class MaybeAssertionsExtensions
 {
