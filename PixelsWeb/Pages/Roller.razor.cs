@@ -78,16 +78,22 @@ public partial class Roller : IAsyncDisposable
                 return;
             }
 
-            await die.ConnectAsync();
-            _connectedDice.Add(die);
-            _animations.Add(die.PixelId, new AnimationState());
-            die.RollingStateChanged += DieRolled;
+            await NewPixelsDieAdded(die);
+            await LocalStorage.SetItemAsync("savedDice", _connectedDice.Select(c => c.SystemId).ToList());
         }
         catch (Exception e)
         {
             Console.WriteLine(e);
             await JsRuntime.InvokeVoidAsync("showFailedConnectToast", "failed-to-connect-toast");
         }
+    }
+
+    private async Task NewPixelsDieAdded(IPixelDevice die)
+    {
+        await die.ConnectAsync();
+        _connectedDice.Add(die);
+        _animations.Add(die.PixelId, new AnimationState());
+        die.RollingStateChanged += DieRolled;
     }
 
     private void DieRolled(IPixelDevice pixelDevice, string state)
@@ -191,6 +197,16 @@ public partial class Roller : IAsyncDisposable
         await LoadSavedSheets();
         //_rotationAnimation = new Timer(AnimateFrame, null, TimeSpan.Zero, TimeSpan.FromMilliseconds(100));
         await CheckBluetoothSupport();
+        await ReconnectDice();
+    }
+
+    private async Task ReconnectDice()
+    {
+        var dice = await LocalStorage.GetItemAsync<List<string>>("savedDice");
+        if (dice == null)
+            return;
+        var reconnected = await PixelsManager.ReconnectAll(dice);
+        await Task.WhenAll(reconnected.Select(NewPixelsDieAdded));
     }
 
     private async Task CheckBluetoothSupport()

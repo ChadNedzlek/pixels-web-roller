@@ -1,6 +1,7 @@
-﻿export * from "@systemic-games/pixels-web-connect";
+﻿import {getPixel} from "@systemic-games/pixels-web-connect";
+export {requestPixel} from '@systemic-games/pixels-web-connect';
 
-let lCount = 0;
+let lCount = 1;
 let handlers = {};
 
 export function addPropertyListener(pixel, property, obj, handler) {
@@ -20,4 +21,13 @@ export function removePropertyListener(pixel, property, id) {
 
 export function getProperty(obj, name) {
     return obj[name];
+}
+
+export async function reconnectPixel(systemId) {
+    const px = await getPixel(systemId);
+    if (!px) {
+        console.log("Failed to reconnect to: " + systemId);
+        throw new Error("vaettir.net::NO_DIE_CONNECTED");
+    }
+    return px;    
 }

@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Microsoft.JSInterop;
@@ -17,7 +19,30 @@ public class PixelsManager
     public async Task<IPixelDevice> RequestPixel()
     {
         var jsRef = await _jsRuntime.InvokeAsync<IJSObjectReference>("pixelWebModule.requestPixel");
-        await _jsRuntime.InvokeVoidAsync("pixelWebModule.repeatConnect", jsRef);
+        var requestPixel = new PixelDevice(jsRef, this);
+        await requestPixel.InitializeAsync();
+        return requestPixel;
+    }
+
+    public async Task<IEnumerable<IPixelDevice>> ReconnectAll(IEnumerable<string> ids)
+    {
+        PixelDevice[] pixels = await Task.WhenAll(ids.Select(ReconnectDeviceOrNull));
+        return pixels.Where(p => p != null);
+    }
+
+    private async Task<PixelDevice> ReconnectDeviceOrNull(string i)
+    {
+        IJSObjectReference jsRef;
+        try
+        {
+            jsRef = await _jsRuntime.InvokeAsync<IJSObjectReference>("pixelWebModule.reconnectPixel", i);
+        }
+        catch (JSException e) when (e.Message.StartsWith("vaettir.net::NO_DIE_CONNECTED"))
+        {
+            // Whatever die we thought we were connected to isn't here anymore.
+            return null;
+        }
+        
         var requestPixel = new PixelDevice(jsRef, this);
         await requestPixel.InitializeAsync();
         return requestPixel;
@@ -34,6 +59,7 @@ public class PixelsManager
         public string RollState { get; private set; }
         public int Face { get; private set; }
         public long PixelId { get; private set; }
+        public string SystemId { get; private set; }
         public string Name { get; private set; }
 
         private DotNetObjectReference<PixelDevice> _thisRef;
@@ -64,6 +90,8 @@ public class PixelsManager
 
         public async Task InitializeAsync()
         {
+            await _pixelsManager._jsRuntime.InvokeVoidAsync("pixelWebModule.repeatConnect", _jsRef);
+            
             PixelId = await _pixelsManager._jsRuntime.InvokeAsync<long>(
                 "pixelWebModule.getProperty",
                 _jsRef,
@@ -73,6 +101,11 @@ public class PixelsManager
                 "pixelWebModule.getProperty",
                 _jsRef,
                 "name"
+            );
+            SystemId = await _pixelsManager._jsRuntime.InvokeAsync<string>(
+                "pixelWebModule.getProperty",
+                _jsRef,
+                "systemId"
             );
             _thisRef = DotNetObjectReference.Create(this);
         }

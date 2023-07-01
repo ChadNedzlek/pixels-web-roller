@@ -12,6 +12,7 @@ public interface IPixelDevice : IAsyncDisposable
     int Face { get; }
     long PixelId { get; }
     string Name { get; }
+    string SystemId { get; }
 
     Task ConnectAsync();
 }
