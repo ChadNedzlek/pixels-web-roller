@@ -1,5 +1,5 @@
 ﻿import {getPixel} from "@systemic-games/pixels-web-connect";
-export {requestPixel} from '@systemic-games/pixels-web-connect';
+export {requestPixel, repeatConnect} from '@systemic-games/pixels-web-connect';
 
 let lCount = 1;
 let handlers = {};
