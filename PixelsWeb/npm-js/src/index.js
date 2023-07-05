@@ -31,3 +31,11 @@ export async function reconnectPixel(systemId) {
     }
     return px;    
 }
+
+export function startAnimation(id) {
+    document.getElementById(id).beginElement();
+}
+
+export function stopAnimation(id) {
+    document.getElementById(id).endElement();
+}

@@ -16,7 +16,7 @@ public partial class Roller : IAsyncDisposable
 {
     private class AnimationState
     {
-        private bool _rotating;
+        public bool IsRolling;
     }
 
     private class SectionRenderOptions
@@ -49,9 +49,9 @@ public partial class Roller : IAsyncDisposable
     private List<string> _availableSheets = SampleSheet.Available.Keys.ToList();
     private string _currentSheetName;
     private double _rotAnimation;
-    private Timer _rotationAnimation;
     private string _importText;
     private bool _isLoading;
+    private int? _reconnectCount;
 
     private string CurrentSheetName
     {
@@ -101,8 +101,24 @@ public partial class Roller : IAsyncDisposable
         switch (state)
         {
             case "onFace":
+            {
+                var anim = _animations.GetOrAdd(pixelDevice.PixelId);
+                if (anim.IsRolling)
+                {
+                    anim.IsRolling = false;
+                    ((IJSInProcessRuntime)JsRuntime).InvokeVoid(
+                        "pixelWebModule.stopAnimation",
+                        "animRoll_" + pixelDevice.PixelId
+                    );
+                }
+                ((IJSInProcessRuntime)JsRuntime).InvokeVoid(
+                    "pixelWebModule.startAnimation",
+                    "animFlash_" + pixelDevice.PixelId
+                );
+
                 if (!_rollingDice.Contains(pixelDevice))
                     return;
+
                 _rollTimer?.Dispose();
                 _rollingDice.Remove(pixelDevice);
                 _completedDice.Add(pixelDevice);
@@ -111,17 +127,31 @@ public partial class Roller : IAsyncDisposable
                 else
                     FinishRoll(null);
                 break;
+            }
             case "crooked":
                 break;
             case "handling":
             case "rolling":
+            {
                 if (_rollingDice.Count == 0)
                 {
                     // We grabbed the first die, a new roll!
                     _completedDice.Clear();
                 }
+
+                var anim = _animations.GetOrAdd(pixelDevice.PixelId);
+                if (!anim.IsRolling)
+                {
+                    anim.IsRolling = true;
+                    ((IJSInProcessRuntime)JsRuntime).InvokeVoid(
+                        "pixelWebModule.startAnimation",
+                        "animRoll_" + pixelDevice.PixelId
+                    );
+                }
+
                 _rollingDice.Add(pixelDevice);
                 break;
+            }
         }
         StateHasChanged();
     }
@@ -194,19 +224,24 @@ public partial class Roller : IAsyncDisposable
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
-        await LoadSavedSheets();
-        //_rotationAnimation = new Timer(AnimateFrame, null, TimeSpan.Zero, TimeSpan.FromMilliseconds(100));
-        await CheckBluetoothSupport();
-        await ReconnectDice();
+        await Task.WhenAll(
+            LoadSavedSheets(),
+            CheckBluetoothSupport(),
+            ReconnectDice()
+        );
     }
 
     private async Task ReconnectDice()
     {
         var dice = await LocalStorage.GetItemAsync<List<string>>("savedDice");
-        if (dice == null)
+        if (dice == null || dice.Count == 0)
             return;
+        _reconnectCount = dice.Count;
+        StateHasChanged();
         var reconnected = await PixelsManager.ReconnectAll(dice);
         await Task.WhenAll(reconnected.Select(NewPixelsDieAdded));
+        _reconnectCount = default;
+        StateHasChanged();
     }
 
     private async Task CheckBluetoothSupport()

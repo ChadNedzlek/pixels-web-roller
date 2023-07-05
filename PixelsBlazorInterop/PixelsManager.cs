@@ -42,9 +42,18 @@ public class PixelsManager
             // Whatever die we thought we were connected to isn't here anymore.
             return null;
         }
-        
+
         var requestPixel = new PixelDevice(jsRef, this);
-        await requestPixel.InitializeAsync();
+        try
+        {
+            await requestPixel.InitializeAsync();
+        }
+        catch (JSException)
+        {
+            // Whatever die we thought we were connected to isn't here anymore.
+            return null;
+        }
+
         return requestPixel;
     }
 

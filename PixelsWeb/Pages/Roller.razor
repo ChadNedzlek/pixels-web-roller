@@ -39,23 +39,39 @@
                     <div class="row">
                         @foreach (var die in _connectedDice)
                         {
-                            <div class="card" style="width: 8rem">
-                                <div class="card-body">
-                                    <h5 class="card-subtitle">@die.Name</h5>
-                                    <p class="card-text">
-                                        @if (die.RollState == "onFace")
-                                        {
-                                            <span class="badge text-bg-primary">@die.Face</span>
-                                        }
-                                        else
-                                        {
-                                            @die.RollState
-                                        }
-                                    </p>
+                            <div class="card" style="width: 7rem">
+                                
+                                <div class="row g-0">
+                                    <div class="col-md-6 align-self-center">
+                                        @RenderDieSvg(die.PixelId.ToString())
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="card-body">
+                                            @if (die.RollState == "onFace")
+                                            {
+                                                <span class="badge text-bg-primary">@die.Face</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge text-bg-primary"><span class="bi bi-dice-1"></span></span>
+                                            }
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         }
                     </div>
+                    @if (_reconnectCount.HasValue)
+                    {
+                        <div class="row">
+                            <div class="alert alert-primary show d-flex align-items-center" role="alert">
+                                <div class="spinner-border flex-shrink-0 me-2" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <strong class="me-2" >Reconnecting</strong> Attempting to reconnect to @_reconnectCount previous dice...
+                            </div>
+                        </div>
+                    }
                     <div class="row">
                         <div class="btn-group" role="group" aria-label="Basic checkbox toggle button group">
                             <button type="button" class="btn btn-primary col-8-sm" @onclick="ConnectPixels">connect dice</button>
@@ -319,31 +335,67 @@ Attack 2: d20 + 5 => 3d6 + 5</code></pre></li>
 </div>
 
 @code {
-    private RenderFragment RenderRotatingDieSvg(string fillColor, double rot)
-    {
-        double CalculateOpacity(int piece)
-        {
-            return ((piece / 9.0) + rot) % 1;
-        }
+    private RenderFragment RenderDieSvg(string id) =>
+    @<svg viewBox="-30 -30 60 60" fill="#444" class="img-fluid" stroke="white">
+        <animate id="animRoll_@id" begin="indefinite" dur="1000h" />
+        <animate id="animFlash_@id" begin="indefinite" dur="1000h" />
+        <animate />
+        <g>
+            <polygon points="0,-30 -26,-15 0,-18">
+                <animate attributeName="fill" begin="animFlash_@(id).begin+0.0s" end="animFlash_@(id).end" dur="0.6s"
+                    values="#444; white; #A5F; white; #444" />
+            </polygon>
+            <polygon points="0,-30 26,-15 0,-18">
+                <animate attributeName="fill" begin="animFlash_@(id).begin+0.2s" end="animFlash_@(id).end" dur="0.6s"
+                    values="#444; white; #A5F; white; #444" />
+            </polygon>
+            <polygon points="26,-15 26,15 16,9">
+                <animate attributeName="fill" begin="animFlash_@(id).begin+0.3s" end="animFlash_@(id).end" dur="0.6s"
+                    values="#444; white; #A5F; white; #444" />
+            </polygon>
+            <polygon points="0,30 26,15 16,9">
+                <animate attributeName="fill" begin="animFlash_@(id).begin+0.5s" end="animFlash_@(id).end" dur="0.6s"
+                    values="#444; white; #A5F; white; #444" />
+            </polygon>
+            <polygon points="0,30 -26,15 -16,9">
+                <animate attributeName="fill" begin="animFlash_@(id).begin+0.6s" end="animFlash_@(id).end" dur="0.6s"
+                    values="#444; white; #A5F; white; #444" />
+            </polygon>
+            <polygon points="-26,-15 -26,15 -16,9">
+                <animate attributeName="fill" begin="animFlash_@(id).begin+0.8s" end="animFlash_@(id).end" dur="0.6s"
+                    values="#444; white; #A5F; white; #444" />
+            </polygon>
 
-        return 
-        @<svg class="img-fluid" viewBox="-22 -22 44 44">
-            <g style="fill: @fillColor; stroke: transparent; stroke-linejoin: round;">
-                <g>
-                    <polygon points="0,-20 -20,-10 0,-10" style="fill-opacity: @CalculateOpacity(0)"/>
-                    <polygon points="0,-20 20,-10 0,-10" style="fill-opacity: @CalculateOpacity(1)"/>
-                    <polygon points="20,-10 0,-10 11,10" style="fill-opacity: @CalculateOpacity(2)"/>
-                    <polygon points="20,-10 11,10 20,10" style="fill-opacity: @CalculateOpacity(3)"/>
-                    <polygon points="20,10 11,10 0,20" style="fill-opacity: @CalculateOpacity(4)"/>
-                    <polygon points="-11,10 11,10 0,20" style="fill-opacity: @CalculateOpacity(5)"/>
-                    <polygon points="-20,10 -11,10 0,20" style="fill-opacity: @CalculateOpacity(6)"/>
-                    <polygon points="-20,-10 -11,10 -20,10" style="fill-opacity: @CalculateOpacity(7)"/>
-                    <polygon points="-20,-10 0,-10 -11,10" style="fill-opacity: @CalculateOpacity(8)"/>
-                </g>
-                <polygon points="0,-10 -11,10 11,10"/>
-            </g>
-       </svg>;
-    }
+            <animateTransform attributeName="transform" type="rotate" begin="animRoll_@(id).begin" end="animRoll_@(id).end"
+                calcMode="spline" dur="3s" values="0; 120; 240; 360" keyTimes="0; 0.33; 0.66; 1"
+                keySplines="0.5 0 0.5 1;0.5 0 0.5 1;0.5 0 0.5 1" repeatCount="indefinite" />
+        </g>
+        <g>
+            <polygon points="26,-15 0,-18 16,9">
+                <animate attributeName="fill" begin="animFlash_@(id).begin+0.74s" end="animFlash_@(id).end" dur="0.6s"
+                    values="#444; white; #A5F; white; #444" />
+            </polygon>
+            <polygon points="0,30 16,9 -16,9">
+                <animate attributeName="fill" begin="animFlash_@(id).begin+0.1s" end="animFlash_@(id).end" dur="0.6s"
+                    values="#444; white; #A5F; white; #444" />
+            </polygon>
+            <polygon points="-26,-15 0,-18 -16,9">
+                <animate attributeName="fill" begin="animFlash_@(id).begin+0.4s" end="animFlash_@(id).end" dur="0.6s"
+                    values="#444; white; #A5F; white; #444" />
+            </polygon>
+            <animateTransform attributeName="transform" type="rotate" begin="animRoll_@(id).begin" end="animRoll_@(id).end"
+                calcMode="spline" dur="3s" values="0; -120; -240; -360" keyTimes="0; 0.33; 0.66; 1"
+                keySplines="0.5 0 0.5 1;0.5 0 0.5 1;0.5 0 0.5 1" repeatCount="indefinite" />
+        </g>
+
+        <polygon points="0,-18 16,9 -16,9">
+            <animateTransform attributeName="transform" type="rotate" begin="animRoll_@(id).begin" end="animRoll_@(id).end"
+                calcMode="spline" dur="3s" values="0; 120; 240; 360" keyTimes="0; 0.33; 0.66; 1"
+                keySplines="0.5 0 0.5 1;0.5 0 0.5 1;0.5 0 0.5 1" repeatCount="indefinite" />
+            <animate attributeName="fill" begin="animFlash_@(id).begin" end="animFlash_@(id).end" dur="2s"
+                values="#444; white; #A5F; #444" />
+        </polygon>
+    </svg>;
 
     private RenderFragment DieText(RollExpressionResult gr)
     {
