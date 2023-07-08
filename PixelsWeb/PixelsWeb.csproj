@@ -22,6 +22,11 @@
       <ProjectReference Include="..\PixelsBlazorInterop\PixelsBlazorInterop.csproj" />
       <ProjectReference Include="..\Rolling\Rolling.csproj" />
     </ItemGroup>
+
+    <ItemGroup>
+      <_ContentIncludedByDefault Remove="Components\Accordian.razor" />
+      <_ContentIncludedByDefault Remove="Components\AccordianItem.razor" />
+    </ItemGroup>
     
     <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
         <Exec Command="npm install" WorkingDirectory="npm-js" />

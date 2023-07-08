@@ -1,0 +1,31 @@
+@code {
+
+    [Parameter]
+    public RenderFragment Title { get; set; }
+
+    [Parameter]
+    public string Id { get; set; }
+
+    [Parameter]
+    public RenderFragment Body { get; set; }
+
+    [Parameter]
+    public string ParentId { get; set; }
+
+    private string ParentIdLookup => string.IsNullOrEmpty(ParentId) ? null : "#" + ParentId;
+
+
+}
+
+<div class="accordion-item">
+    <h2 class="accordion-header">
+        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-@Id" aria-expanded="true" aria-controls="collapse-@Id">
+            @Title
+        </button>
+    </h2>
+    <div id="collapse-@Id" class="accordion-collapse collapse show" data-bs-parent="@ParentIdLookup">
+        <div class="accordion-body">
+            @Body
+        </div>
+    </div>
+</div>

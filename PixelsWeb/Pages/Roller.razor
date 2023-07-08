@@ -5,6 +5,7 @@
 @using Rolling.Models.Rolls
 @using Rolling.Visitors
 @using Utilities
+@using PixelsWeb.Shared.Components
 @inject ILocalStorageService LocalStorage
 @inject PixelsManager PixelsManager
 @inject IJSRuntime JsRuntime
@@ -27,60 +28,54 @@
 </div>
 @if (_isBluetoothSupported)
 {
-    <div class="accordion" id="connected-accordion">
-        <div class="accordion-item">
-            <h2 class="accordion-header">
-                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-connected" aria-expanded="true" aria-controls="collapse-connected">
-                    connected dice
-                </button>
-            </h2>
-            <div id="collapse-connected" class="accordion-collapse collapse show" data-bs-parent="#connected-accordion">
-                <div class="accordion-body">
-                    <div class="row">
-                        @foreach (var die in _connectedDice)
-                        {
-                            <div class="card" style="width: 7rem">
-                                
-                                <div class="row g-0">
-                                    <div class="col-md-6 align-self-center">
-                                        @RenderDieSvg(die.PixelId.ToString())
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="card-body">
-                                            @if (die.RollState == "onFace")
-                                            {
-                                                <span class="badge text-bg-primary">@die.Face</span>
-                                            }
-                                            else
-                                            {
-                                                <span class="badge text-bg-primary"><span class="bi bi-dice-1"></span></span>
-                                            }
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        }
-                    </div>
-                    @if (_reconnectCount.HasValue)
-                    {
-                        <div class="row">
-                            <div class="alert alert-primary show d-flex align-items-center" role="alert">
-                                <div class="spinner-border flex-shrink-0 me-2" role="status">
-                                    <span class="visually-hidden">Loading...</span>
-                                </div>
-                                <strong class="me-2" >Reconnecting</strong> Attempting to reconnect to @_reconnectCount previous dice...
-                            </div>
+    <Accordian Id="conn">
+        <Title>connected dice</Title>
+        <Body>
+        <div class="row">
+            @foreach (IPixelDevice die in _connectedDice)
+            {
+                <div class="card" style="width: 7rem">
+
+                    <div class="row g-0">
+                        <div class="col-md-6 align-self-center">
+                            @RenderDieSvg(die.PixelId.ToString())
                         </div>
-                    }
-                    <div class="row">
-                        <div class="btn-group" role="group" aria-label="Basic checkbox toggle button group">
-                            <button type="button" class="btn btn-primary col-8-sm" @onclick="ConnectPixels">connect dice</button>
+                        <div class="col-md-6">
+                            <div class="card-body">
+                                @if (die.RollState == "onFace")
+                                {
+                                    <span class="badge text-bg-primary">@die.Face</span>
+                                }
+                                else
+                                {
+                                    <span class="badge text-bg-primary">
+                                        <span class="bi bi-dice-1"></span>
+                                    </span>
+                                }
+                            </div>
                         </div>
                     </div>
                 </div>
+            }
+        </div>
+        @if (_reconnectCount.HasValue)
+        {
+            <div class="row">
+                <div class="alert alert-primary show d-flex align-items-center" role="alert">
+                    <div class="spinner-border flex-shrink-0 me-2" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <strong class="me-2">Reconnecting</strong> Attempting to reconnect to @_reconnectCount previous dice...
+                </div>
+            </div>
+        }
+        <div class="row">
+            <div class="btn-group" role="group" aria-label="Basic checkbox toggle button group">
+                <button type="button" class="btn btn-primary col-8-sm" @onclick="ConnectPixels">connect dice</button>
             </div>
         </div>
-    </div>
+        </Body>
+    </Accordian>
 }
 else
 {
@@ -89,63 +84,57 @@ else
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 }
-<div class="accordion" id="definition-accordion">
-    <div class="accordion-item">
-        <h2 class="accordion-header">
-            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-definition" aria-expanded="true" aria-controls="collapse-definition">
-                roll definitions
+<Accordian Id="roll-def">
+    <Title>roll definitions</Title>
+    <Body>
+    <div class="row">
+        <div class="col">
+            <input type="text" class="form-control" placeholder="Sheet Name" aria-label="sheet name" @bind="CurrentSheetName" @bind:after="CurrentSheetRenamed"/>
+        </div>
+        <div class="col">
+            <select class="form-select" @bind="_currentSheetName" @bind:after="CurrentSheetChanged" aria-label="select sheet">
+                @foreach (string o in _availableSheets)
+                {
+                    <option>@o</option>
+                }
+            </select>
+        </div>
+        <div class="col-auto">
+            <button class="btn btn-primary" type="button" @onclick="NewSheet">new</button>
+            <button class="btn btn-primary" type="button" @onclick="DeleteCurrentSheet">delete</button>
+            <button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#import-modal" disabled="@(_isLoading)">
+                @if (_isLoading)
+                {
+                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    <span>importing...</span>
+                }
+                else
+                {
+                    <span>import...</span>
+                }
             </button>
-        </h2>
-        <div id="collapse-definition" class="accordion-collapse collapse" data-bs-parent="#definition-accordion">
-            <div class="accordion-body">
-                <div class="row">
-                    <div class="col">
-                        <input type="text" class="form-control" placeholder="Sheet Name" aria-label="sheet name" @bind="CurrentSheetName" @bind:after="CurrentSheetRenamed"/>
-                    </div>
-                    <div class="col">
-                        <select class="form-select" @bind="_currentSheetName" @bind:after="CurrentSheetChanged" aria-label="select sheet">
-                            @foreach (var o in _availableSheets)
-                            {
-                                <option>@o</option>
-                            }
-                        </select>
-                    </div>
-                    <div class="col-auto">
-                        <button class="btn btn-primary" type="button" @onclick="NewSheet">new</button>
-                        <button class="btn btn-primary" type="button" @onclick="DeleteCurrentSheet">delete</button>
-                        <button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#import-modal" disabled="@(_isLoading)">
-                            @if (_isLoading)
-                            {
-                                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                                <span>importing...</span>
-                            }
-                            else
-                            {
-                                <span>import...</span>
-                            }
-                        </button>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col">
-                        <label for="roll-definitions" class="form-label">
-                            roll text
-                            <a data-bs-toggle="offcanvas" href="#syntax-help" role="link" aria-controls="syntax-help"><span class="badge bg-primary rounded-pill">?</span></a>
-                        </label>
-                        <textarea class="form-control @(_errorMessage != null ? "is-invalid" : "")" style="height: 10em;" id="roll-definitions" @bind:after="RollChanged" @bind="_rollText" @bind:event="oninput" autocomplete="off" autocapitalize="off"></textarea>
-                        <div class="form-text text-danger">@_errorMessage</div>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
-</div>
+    <div class="row">
+        <div class="col">
+            <label for="roll-definitions" class="form-label">
+                roll text
+                <a data-bs-toggle="offcanvas" href="#syntax-help" role="link" aria-controls="syntax-help">
+                    <span class="badge bg-primary rounded-pill">?</span>
+                </a>
+            </label>
+            <textarea class="form-control @(_errorMessage != null ? "is-invalid" : "")" style="height: 10em;" id="roll-definitions" @bind:after="RollChanged" @bind="_rollText" @bind:event="oninput" autocomplete="off" autocapitalize="off"></textarea>
+            <div class="form-text text-danger">@_errorMessage</div>
+        </div>
+    </div>
+    </Body>
+</Accordian>
 
 <div class="modal fade" id="import-modal" tabindex="-1" aria-labelledby="import-modal-title" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h1 class="modal-title fs-5" id="import-modal-title">Import Character</h1> 
+                <h1 class="modal-title fs-5" id="import-modal-title">Import Character</h1>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form class="modal-body" id="import-modal-form">
@@ -155,7 +144,7 @@ else
                 </div>
                 <hr>
                 <div class="hr-text-overlay">
-                    <hr />
+                    <hr/>
                     <span>OR</span>
                 </div>
                 <div class="row">
@@ -166,7 +155,7 @@ else
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
-            </div>
+        </div>
     </div>
 </div>
 
@@ -179,38 +168,54 @@ else
         <h5>Basic rolls</h5>
         <p>Rolls can be written in straightforward manner.</p>
         <ul>
-            <li><code>2d12</code></li>
-            <li><code>3d6 + 2d4 + 5</code></li>
+            <li>
+                <code>2d12</code>
+            </li>
+            <li>
+                <code>3d6 + 2d4 + 5</code>
+            </li>
         </ul>
         <p>The count of dice can be skipped for single dice.</p>
         <ul>
-            <li><code>d20 + 12</code></li>
+            <li>
+                <code>d20 + 12</code>
+            </li>
         </ul>
         <h5>Named rolls</h5>
         <p>Any roll can be named, by putting it before a colon in front of a roll</p>
         <ul>
-            <li><code>Perception: d20 + 12</code></li>
+            <li>
+                <code>Perception: d20 + 12</code>
+            </li>
         </ul>
         <h5>Multiple rolls</h5>
         <p>Multiple rolls can be specified, each on it's own line</p>
         <ul>
             <li>
                 <pre><code>d20 + 10
-3d6 + 7</code></pre></li>
+3d6 + 7</code></pre>
+            </li>
             <li>
                 <pre><code>Attack: d20 + 10
-Fireball: 3d6 + 7</code></pre></li>
+Fireball: 3d6 + 7</code></pre>
+            </li>
         </ul>
         <h5>Roll tags</h5>
         <p>Dices and modifiers can be tagged, with, for example, damage types. Tagged dice will be kept seprate when rolled and not summed into the total. To tag a roll, just follow it with some words.</p>
         <ul>
-            <li><code>2d6 + 10 + 1d6 fire</code></li>
-            <li><code>d20 + 4 against poison</code></li>
+            <li>
+                <code>2d6 + 10 + 1d6 fire</code>
+            </li>
+            <li>
+                <code>d20 + 4 against poison</code>
+            </li>
         </ul>
         <h5>Conditional rolls</h5>
         <p>Conditional rolls (for example, an attack roll followed by the damage if it hits), are separated by <code>=></code></p>
         <ul>
-            <li><code>d20 + 15 => 3d6 + 7 + 1d6 fire</code></li>
+            <li>
+                <code>d20 + 15 => 3d6 + 7 + 1d6 fire</code>
+            </li>
         </ul>
         <h5>Roll groups</h5>
         <p>Rolls can be grouped, both for visual collapsing of groups, as well as for easy rolling with external devices by providing a title surrounded by <code>===</code> or <code>***</code></p>
@@ -221,11 +226,13 @@ Fireball: 3d6 + 7</code></pre></li>
                 <pre><code>=== Skills ===
 Perception: d20 + 7
 Stealth: d20 + 11 + 3 in shadows
-Fireball: 3d6 + 7</code></pre></li>
+Fireball: 3d6 + 7</code></pre>
+            </li>
             <li>
                 <pre><code>*** Attacks ***
 Attack 1: d20 + 10 => 3d6 + 5
-Attack 2: d20 + 5 => 3d6 + 5</code></pre></li>
+Attack 2: d20 + 5 => 3d6 + 5</code></pre>
+            </li>
         </ul>
     </div>
 </div>
@@ -248,79 +255,77 @@ Attack 2: d20 + 5 => 3d6 + 5</code></pre></li>
         {
             sectionId++;
             int id = 1;
-            <div class="accordion-item">
-                <h2 class="accordion-header">
-                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-@sectionId" aria-expanded="true" aria-controls="collapse-@sectionId">
-                        <button class="btn btn-outline-primary btn-sm me-2" data-bs-toggle="collapse" data-bs-target="#collapse-config-section-@sectionId" aria-expanded="false" aria-controls="collapse-config-section-@sectionId">
-                            <span class="bi bi-gear"><span class="visually-hidden">config section</span></span>
-                        </button>
-                        
-                        @options.Name
+            <AccordianItem Id="@($"roll-{sectionId}")">
+                <Title>
+                    <button class="btn btn-outline-primary btn-sm me-2" data-bs-toggle="collapse" data-bs-target="#collapse-config-section-@sectionId" aria-expanded="false" aria-controls="collapse-config-section-@sectionId">
+                        <span class="bi bi-gear">
+                            <span class="visually-hidden">config section</span>
+                        </span>
                     </button>
-                </h2>
-                <div id="collapse-@sectionId" class="accordion-collapse collapse show">
-                    <div class="accordion-body">
-                        <div class="collapse" id="collapse-config-section-@sectionId">
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="section-compact-check-@sectionId" @bind="options.Compact" @bind:after="SaveRenderOptions">
-                                <label class="form-check-label" for="section-compact-check-@sectionId">Compact Display</label>
-                            </div>
-                            <hr/>
-                        </div>
-                        <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 row-cols-xl-4">
-                            @foreach (EvaluatedRoll<Maybe<RollExpressionResult>> roll in section.Rolls)
-                            {
-                                id++;
-                                <div class="col">
-                                    <div class="card">
-                                        @if (options.Compact)
+
+                    @options.Name
+                </Title>
+                <Body>
+                <div class="collapse" id="collapse-config-section-@sectionId">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="section-compact-check-@sectionId" @bind="options.Compact" @bind:after="SaveRenderOptions">
+                        <label class="form-check-label" for="section-compact-check-@sectionId">Compact Display</label>
+                    </div>
+                    <hr/>
+                </div>
+                <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 row-cols-xl-4">
+                    @foreach (EvaluatedRoll<Maybe<RollExpressionResult>> roll in section.Rolls)
+                    {
+                        id++;
+                        <div class="col">
+                            <div class="card">
+                                @if (options.Compact)
+                                {
+                                    <div class="card-body">
+                                        @roll.Definition.Name.Or($"Roll {id}"):
+                                        @if (roll.Value.TryValue(out RollExpressionResult res))
                                         {
-                                            <div class="card-body">
-                                                @roll.Definition.Name.Or($"Roll {id}"): 
-                                                @if (roll.Value.TryValue(out var res))
-                                                {
-                                                    @DieText(res)
-                                                    if (roll.ConditionalValue.OrDefault().TryValue(out var cond))
-                                                    {
-                                                        <span> => </span>
-                                                        @DieText(cond)
-                                                    }
-                                                }
-                                                else
-                                                {
-                                                    <span class="text-muted">
-                                                        @_describer.Evaluate(roll.Definition.Expression)
-                                                        @roll.Definition.ConditionalExpression.Match(e => " => " + _describer.Evaluate(e), "")
-                                                    </span>
-                                                }
-                                            </div>
+                                            @DieText(res)
+                                            if (roll.ConditionalValue.OrDefault().TryValue(out RollExpressionResult cond))
+                                            {
+                                                <span> => </span>
+                                                @DieText(cond)
+                                            }
                                         }
                                         else
                                         {
-                                            <div class="card-header">@roll.Definition.Name.Or($"Roll {id}")</div>
-                                            <div class="card-body">
-                                                <h6 class="card-subtitle mb-2 text-body-secondary">
-                                                    @_describer.Evaluate(roll.Definition.Expression)
-                                                    @roll.Definition.ConditionalExpression.Match(e => " => " + _describer.Evaluate(e), "")
-                                                </h6>
-                                                @if (roll.Value.TryValue(out var res))
-                                                {
-                                                    @DieText(res)
-                                                    if (roll.ConditionalValue.OrDefault().TryValue(out var cond))
-                                                    {
-                                                        <span> => </span>
-                                                        @DieText(cond)
-                                                    }
-                                                }
-                                            </div>
+                                            <span class="text-muted">
+                                                @_describer.Evaluate(roll.Definition.Expression)
+                                                @roll.Definition.ConditionalExpression.Match(e => " => " + _describer.Evaluate(e), "")
+                                            </span>
                                         }
                                     </div>
-                                </div>
-                            }
+                                }
+                                else
+                                {
+                                    <div class="card-header">@roll.Definition.Name.Or($"Roll {id}")</div>
+                                    <div class="card-body">
+                                        <h6 class="card-subtitle mb-2 text-body-secondary">
+                                            @_describer.Evaluate(roll.Definition.Expression)
+                                            @roll.Definition.ConditionalExpression.Match(e => " => " + _describer.Evaluate(e), "")
+                                        </h6>
+                                        @if (roll.Value.TryValue(out RollExpressionResult res))
+                                        {
+                                            @DieText(res)
+                                            if (roll.ConditionalValue.OrDefault().TryValue(out RollExpressionResult cond))
+                                            {
+                                                <span> => </span>
+                                                @DieText(cond)
+                                            }
+                                        }
+                                    </div>
+                                }
+                            </div>
                         </div>
-                    </div>
+                    }
                 </div>
-            </div>
+                </Body>
+            </AccordianItem>
         }
     </div>
 }
@@ -328,92 +333,97 @@ Attack 2: d20 + 5 => 3d6 + 5</code></pre></li>
 {
     <div class="alert alert-danger alert-dismissible fade show" role="alert">
         <strong>Error rolling dice</strong> Report the below error:
-        <p><pre>@_rollErrorText</pre></p>
+        <p>
+            <pre>@_rollErrorText</pre>
+        </p>
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 }
 </div>
 
 @code {
+
     private RenderFragment RenderDieSvg(string id) =>
-    @<svg viewBox="-30 -30 60 60" fill="#444" class="img-fluid" stroke="white">
-        <animate />
-        <g>
-            <polygon points="0,-30 -26,-15 0,-18">
-                <animate attributeName="fill" id="animFlash_@(id)" begin="indefinite" dur="0.6s"
-                    values="#444; white; #A5F; white; #444" />
-            </polygon>
-            <polygon points="0,-30 26,-15 0,-18">
-                <animate attributeName="fill" begin="animFlash_@(id).begin+0.2s" dur="0.6s"
-                    values="#444; white; #A5F; white; #444" />
-            </polygon>
-            <polygon points="26,-15 26,15 16,9">
-                <animate attributeName="fill" begin="animFlash_@(id).begin+0.3s" dur="0.6s"
-                    values="#444; white; #A5F; white; #444" />
-            </polygon>
-            <polygon points="0,30 26,15 16,9">
-                <animate attributeName="fill" begin="animFlash_@(id).begin+0.5s" dur="0.6s"
-                    values="#444; white; #A5F; white; #444" />
-            </polygon>
-            <polygon points="0,30 -26,15 -16,9">
-                <animate attributeName="fill" begin="animFlash_@(id).begin+0.6s" dur="0.6s"
-                    values="#444; white; #A5F; white; #444" />
-            </polygon>
-            <polygon points="-26,-15 -26,15 -16,9">
-                <animate attributeName="fill" begin="animFlash_@(id).begin+0.8s" dur="0.6s"
-                    values="#444; white; #A5F; white; #444" />
-            </polygon>
+        @<svg viewBox="-30 -30 60 60" fill="#444" class="img-fluid" stroke="white">
+            <g>
+                <polygon points="0,-30 -26,-15 0,-18">
+                    <animate attributeName="fill" id="animFlash_@(id)" begin="indefinite" dur="0.6s"
+                             values="#444; white; #A5F; white; #444"/>
+                </polygon>
+                <polygon points="0,-30 26,-15 0,-18">
+                    <animate attributeName="fill" begin="animFlash_@(id).begin+0.2s" dur="0.6s"
+                             values="#444; white; #A5F; white; #444"/>
+                </polygon>
+                <polygon points="26,-15 26,15 16,9">
+                    <animate attributeName="fill" begin="animFlash_@(id).begin+0.3s" dur="0.6s"
+                             values="#444; white; #A5F; white; #444"/>
+                </polygon>
+                <polygon points="0,30 26,15 16,9">
+                    <animate attributeName="fill" begin="animFlash_@(id).begin+0.5s" dur="0.6s"
+                             values="#444; white; #A5F; white; #444"/>
+                </polygon>
+                <polygon points="0,30 -26,15 -16,9">
+                    <animate attributeName="fill" begin="animFlash_@(id).begin+0.6s" dur="0.6s"
+                             values="#444; white; #A5F; white; #444"/>
+                </polygon>
+                <polygon points="-26,-15 -26,15 -16,9">
+                    <animate attributeName="fill" begin="animFlash_@(id).begin+0.8s" dur="0.6s"
+                             values="#444; white; #A5F; white; #444"/>
+                </polygon>
 
-            <animateTransform attributeName="transform" type="rotate" id="animRoll_@(id)" begin="indefinite" end="indefinite"
-                calcMode="spline" dur="3s" values="0; 120; 240; 360" keyTimes="0; 0.33; 0.66; 1"
-                keySplines="0.5 0 0.5 1;0.5 0 0.5 1;0.5 0 0.5 1" repeatCount="indefinite" />
-        </g>
-        <g>
-            <polygon points="26,-15 0,-18 16,9">
-                <animate attributeName="fill" begin="animFlash_@(id).begin+0.74s" dur="0.6s"
-                    values="#444; white; #A5F; white; #444" />
-            </polygon>
-            <polygon points="0,30 16,9 -16,9">
-                <animate attributeName="fill" begin="animFlash_@(id).begin+0.1s" dur="0.6s"
-                    values="#444; white; #A5F; white; #444" />
-            </polygon>
-            <polygon points="-26,-15 0,-18 -16,9">
-                <animate attributeName="fill" begin="animFlash_@(id).begin+0.4s" dur="0.6s"
-                    values="#444; white; #A5F; white; #444" />
-            </polygon>
-            <animateTransform attributeName="transform" type="rotate" begin="animRoll_@(id).begin" end="animRoll_@(id).endEvent"
-                calcMode="spline" dur="3s" values="0; -120; -240; -360" keyTimes="0; 0.33; 0.66; 1"
-                keySplines="0.5 0 0.5 1;0.5 0 0.5 1;0.5 0 0.5 1" repeatCount="indefinite" />
-        </g>
+                <animateTransform attributeName="transform" type="rotate" id="animRoll_@(id)" begin="indefinite" end="indefinite"
+                                  calcMode="spline" dur="3s" values="0; 120; 240; 360" keyTimes="0; 0.33; 0.66; 1"
+                                  keySplines="0.5 0 0.5 1;0.5 0 0.5 1;0.5 0 0.5 1" repeatCount="indefinite"/>
+            </g>
+            <g>
+                <polygon points="26,-15 0,-18 16,9">
+                    <animate attributeName="fill" begin="animFlash_@(id).begin+0.74s" dur="0.6s"
+                             values="#444; white; #A5F; white; #444"/>
+                </polygon>
+                <polygon points="0,30 16,9 -16,9">
+                    <animate attributeName="fill" begin="animFlash_@(id).begin+0.1s" dur="0.6s"
+                             values="#444; white; #A5F; white; #444"/>
+                </polygon>
+                <polygon points="-26,-15 0,-18 -16,9">
+                    <animate attributeName="fill" begin="animFlash_@(id).begin+0.4s" dur="0.6s"
+                             values="#444; white; #A5F; white; #444"/>
+                </polygon>
+                <animateTransform attributeName="transform" type="rotate" begin="animRoll_@(id).begin" end="animRoll_@(id).endEvent"
+                                  calcMode="spline" dur="3s" values="0; -120; -240; -360" keyTimes="0; 0.33; 0.66; 1"
+                                  keySplines="0.5 0 0.5 1;0.5 0 0.5 1;0.5 0 0.5 1" repeatCount="indefinite"/>
+            </g>
 
-        <polygon points="0,-18 16,9 -16,9">
-            <animateTransform attributeName="transform" type="rotate" begin="animRoll_@(id).begin" end="animRoll_@(id).endEvent"
-                calcMode="spline" dur="3s" values="0; 120; 240; 360" keyTimes="0; 0.33; 0.66; 1"
-                keySplines="0.5 0 0.5 1;0.5 0 0.5 1;0.5 0 0.5 1" repeatCount="indefinite" />
-            <animate attributeName="fill" begin="animFlash_@(id).begin" dur="2s"
-                values="#444; white; #A5F; #444" />
-        </polygon>
-    </svg>;
+            <polygon points="0,-18 16,9 -16,9">
+                <animateTransform attributeName="transform" type="rotate" begin="animRoll_@(id).begin" end="animRoll_@(id).endEvent"
+                                  calcMode="spline" dur="3s" values="0; 120; 240; 360" keyTimes="0; 0.33; 0.66; 1"
+                                  keySplines="0.5 0 0.5 1;0.5 0 0.5 1;0.5 0 0.5 1" repeatCount="indefinite"/>
+                <animate attributeName="fill" begin="animFlash_@(id).begin" dur="2s"
+                         values="#444; white; #A5F; #444"/>
+            </polygon>
+        </svg>;
 
     private RenderFragment DieText(RollExpressionResult gr)
     {
-        return @<span>@GroupText(gr.Groups[0])
-           @foreach (var (g, o) in gr.Groups.Skip(1).Zip(gr.Operations))
-           {
-               <span> @o </span>
-               @GroupText(g)
-           }
-       </span>;
+        return @<span>
+                   @GroupText(gr.Groups[0])
+                   @foreach (var (g, o) in gr.Groups.Skip(1).Zip(gr.Operations))
+                   {
+                       <span> @o </span>
+                       @GroupText(g)
+                   }
+               </span>;
     }
 
     private RenderFragment RolledDie() => @<span class="bi bi-dice-6" alt="(crit. fail)"></span>;
+
     private RenderFragment CritFail() => @<span class="bi bi-caret-down" alt="(crit. fail)"></span>;
+
     private RenderFragment CritSuccess() => @<span class="bi bi-caret-up" alt="(crit. success)"></span>;
+
     private RenderFragment Dropped() => @<span class="bi bi-box-arrow-down" alt="(dropped)"></span>;
 
     private RenderFragment RenderDieRoll(SingleRollResult singleRollResult)
     {
-
         string CalcColor(AssignedDieRoll d)
         {
             if (d.Dropped)
@@ -426,7 +436,7 @@ Attack 2: d20 + 5 => 3d6 + 5</code></pre></li>
                 return "text-bg-dark";
             return "text-bg-primary";
         }
-        
+
         RenderFragment GetIcon(AssignedDieRoll d)
         {
             if (d.Dropped)
@@ -441,11 +451,11 @@ Attack 2: d20 + 5 => 3d6 + 5</code></pre></li>
         }
 
         return @<span>
-            @foreach (var roll in singleRollResult.Rolls)
-            {
-            <span class="badge @CalcColor(roll)">@roll.Value.Result @GetIcon(roll)</span>
-            }
-        </span>;
+                   @foreach (var roll in singleRollResult.Rolls)
+                   {
+                       <span class="badge @CalcColor(roll)">@roll.Value.Result @GetIcon(roll)</span>
+                   }
+               </span>;
     }
 
     private RenderFragment RenderConstant(RollResult rollResult) => @<span class="badge text-bg-dark">@rollResult.Value </span>;
@@ -454,7 +464,7 @@ Attack 2: d20 + 5 => 3d6 + 5</code></pre></li>
     {
         RenderFragment renderedDie = item switch {
             SingleRollResult res => RenderDieRoll(res),
-            var i =>RenderConstant(i),
+            var i =>RenderConstant(i)
             };
         return renderedDie;
     }
@@ -462,18 +472,19 @@ Attack 2: d20 + 5 => 3d6 + 5</code></pre></li>
     private RenderFragment GroupText(RollResultGroup group)
     {
         RenderFragment label = null;
-        
+
         if (_showDetails)
         {
             return @<span>
-                @RenderSingleGroupItem(group.Items[0])
-                @foreach (var (item, op) in group.Items.Skip(1).Zip(group.Operations))
-                {
-                   <span>@op</span>
-                   
-                   @RenderSingleGroupItem(item)
-                } @group.Tag.OrDefault()
-           </span>;
+                       @RenderSingleGroupItem(group.Items[0])
+                       @foreach (var (item, op) in group.Items.Skip(1).Zip(group.Operations))
+                       {
+                           <span>@op</span>
+
+                           @RenderSingleGroupItem(item)
+                       }
+                       @group.Tag.OrDefault()
+                   </span>;
         }
 
         var dice = group.Items.OfType<SingleRollResult>().ToList();
